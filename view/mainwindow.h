@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 
+#include "controller/controller.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -19,7 +21,8 @@ class MainWindow : public QMainWindow {
  private:
   Ui::MainWindow *ui;
   QMenuBar *menu_bar;
-
+  Controller *controller;
   auto SetupMenu() -> void;
+  auto GetLeads() -> void;
 };
 #endif  // MAINWINDOW_H
