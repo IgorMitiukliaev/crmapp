@@ -4,6 +4,8 @@
 #include <QMainWindow>
 
 #include "controller/controller.h"
+#include "./widgets/leadswidget.h"
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -20,9 +22,11 @@ class MainWindow : public QMainWindow {
 
  private:
   Ui::MainWindow *ui;
-  QMenuBar *menu_bar;
-  Controller *controller;
+  QMenuBar *menu_bar_;
+  QWidget *child_widget_;
+  Controller *controller_;
   auto SetupMenu() -> void;
+  auto SetupLeadsWidget() -> void;
   auto GetLeads() -> void;
 };
 #endif  // MAINWINDOW_H

@@ -1,5 +1,12 @@
 #include "controller.h"
 
+Controller::Controller(QObject *parent)
+    : QObject(parent), request_(new HttpRequest) {
+  connect(request_, &HttpRequest::dataReady, this, &Controller::ReadData);
+}
+
+Controller::~Controller() { delete request_; };
+
 auto Controller::Init() -> void {
   FileUtility f;
   std::string path = "/home/igor/Movavi/CRM/keys/keys.csv";
@@ -9,24 +16,43 @@ auto Controller::Init() -> void {
   }
 }
 
-auto Controller::GetLeads() -> void {
-  HttpRequest request;
-  QUrlQuery params;
-  params.addQueryItem("createdFrom","2022-08-05");
-  params.addQueryItem("createdTo", "2022-09-25");
+auto Controller::GetLeads(QUrlQuery params) -> void {
   QString path = "GetLeads";
   std::string key = keys_.at(path.toStdString());
   params.addQueryItem("authkey",
                       QUrl::toPercentEncoding(QString::fromStdString(key)));
-  request.GetData(path, params);
+  request_->MakeHTTPRequest(path, params);
+};
+
+auto Controller::GetHistoryModifyLeadStatus() -> void {
+  QUrlQuery params;
+  params.addQueryItem("dateTimeFrom", "2022-09-05");
+  params.addQueryItem("dateTimeTo", "2022-09-15");
+  QString path = "GetHistoryModifyLeadStatus";
+  std::string key = keys_.at(path.toStdString());
+  params.addQueryItem("authkey",
+                      QUrl::toPercentEncoding(QString::fromStdString(key)));
+  request_->MakeHTTPRequest(path, params);
 };
 
 auto Controller::GetOffices() -> void {
-  HttpRequest request;
   QUrlQuery params;
   QString path = "GetOffices";
   std::string key = keys_.at(path.toStdString());
   params.addQueryItem("authkey",
-                      QString::fromStdString(key));
-  request.GetData(path, params);
+                      QUrl::toPercentEncoding(QString::fromStdString(key)));
+  request_->MakeHTTPRequest(path, params);
 };
+
+auto Controller::ReadData() -> void {
+  QString path = "./out.json";
+  QFile file(path);
+  if (file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
+    QTextStream iStream(&file);
+    iStream.setEncoding(QStringConverter::Utf8);
+    iStream << *(request_->ReadData());
+    file.close();
+  } else {
+    std::cout << "file open failed: " << path.toStdString() << std::endl;
+  }
+}

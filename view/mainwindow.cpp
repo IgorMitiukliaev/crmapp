@@ -1,41 +1,54 @@
 #include "view/mainwindow.h"
 
+#include "ui_leadswidget.h"
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), controller(new Controller) {
+    : QMainWindow(parent), ui(new Ui::MainWindow), controller_(new Controller) {
   ui->setupUi(this);
 
   SetupMenu();
-  setMenuBar(menu_bar);
   sizeHint();
-  controller->Init();
+  controller_->Init();
 }
 
 MainWindow::~MainWindow() {
-  delete menu_bar;
-  delete controller;
+  delete menu_bar_;
+  delete controller_;
   delete ui;
 }
 
 auto MainWindow::SetupMenu() -> void {
-  QAction *quit_app = new QAction("Quit application");
-  QAction *load_leads = new QAction("Load leads");
-  QAction *load_offices = new QAction("Load offices");
-  connect(quit_app, &QAction::triggered, [=]() { QApplication::quit(); });
-  connect(load_leads, &QAction::triggered,
-          [this]() { controller->GetLeads(); });
-  connect(load_offices, &QAction::triggered,
-          [this]() { controller->GetOffices(); });
+  menu_bar_ = new QMenuBar;
+  setMenuBar(menu_bar_);
+  QMenu *file_menu = menu_bar_->addMenu("School");
+  QMenu *leads_menu = menu_bar_->addMenu("Leads");
 
-  menu_bar = new QMenuBar;
-  QMenu *file_menu = menu_bar->addMenu("School");
-  QMenu *leads_menu = menu_bar->addMenu("Leads");
-  //  QMenu *students_menu = menu_bar->addMenu("Students");
+  QAction *load_offices = new QAction("Load offices");
+  connect(load_offices, &QAction::triggered,
+          [this]() { controller_->GetOffices(); });
   file_menu->addAction(load_offices);
+
+  QAction *quit_app = new QAction("Quit application");
+  connect(quit_app, &QAction::triggered, [=]() { QApplication::quit(); });
   file_menu->addAction(quit_app);
 
+  QAction *load_leads = new QAction("Load leads");
+  connect(load_leads, &QAction::triggered, [this]() { SetupLeadsWidget(); });
   leads_menu->addAction(load_leads);
+
+  QAction *load_history_modify_lead_status =
+      new QAction("Load History Modify Lead Status");
+  connect(load_history_modify_lead_status, &QAction::triggered,
+          [this]() { controller_->GetHistoryModifyLeadStatus(); });
+  leads_menu->addAction(load_history_modify_lead_status);
+
+
+}
+
+void MainWindow::SetupLeadsWidget() {
+    child_widget_ = new LeadsWidget(controller_, ui->centralwidget);
+  ui->gridLayout->addWidget(child_widget_);
 }
 
 auto MainWindow::GetLeads() -> void {

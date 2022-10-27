@@ -2,41 +2,39 @@
 
 HttpRequest::HttpRequest(QObject *parent)
     : QObject(parent),
-      manager_(new QNetworkAccessManager()),
+      manager_(new QNetworkAccessManager(this)),
       reply_(nullptr),
-      buffer_(new QByteArray) {
-  //    connect(manager_, &QNetworkAccessManager::finished, this,
-  //            &HttpRequest::dataReadFinished);
+      data_buffer_(new QByteArray) {}
 
-  connect(manager_, SIGNAL(finished(QNetworkReply *)), this,
-          SLOT(dataReadFinished(QNetworkReply *)));
-}
+HttpRequest::~HttpRequest() {}
 
-HttpRequest::~HttpRequest() {
-  delete manager_;
-  delete buffer_;
-}
-
-auto HttpRequest::GetData(QString &req_name, const QUrlQuery &params) -> void {
+auto HttpRequest::MakeHTTPRequest(QString &req_type, QUrlQuery &param) -> void {
   QUrl url;
   url.setScheme("https");
   url.setHost("movavischool.t8s.ru");
-  url.setPath(QString::fromStdString("/Api/V2/") + req_name);
-  url.setQuery(params.toString());
-  QNetworkRequest request(url);
-  request.setHeader(QNetworkRequest::ContentTypeHeader,
-                    "application/x-www-form-urlencoded");
-  qDebug() << url;
-  reply_ = manager_->post(request, url.toEncoded());
+  url.setPath("/Api/V2/" + req_type);
+  url.setQuery(param.toString());
+
+  QNetworkRequest request;
+  request.setUrl(url);
+  reply_ = manager_->get(request);
+  connect(reply_, &QIODevice::readyRead, this, &HttpRequest::DataReadyRead);
+  connect(reply_, &QNetworkReply::finished, this,
+          &HttpRequest::DataReadFinished);
 }
 
-auto HttpRequest::dataReadFinished(QNetworkReply *r) -> void {
-  qDebug() << r;
-  buffer_->append(r->readAll());
-  if (r->error()) {
-    qDebug() << r->errorString();
+void HttpRequest::DataReadyRead() {
+  data_buffer_->clear();
+  data_buffer_->append(reply_->readAll());
+}
+
+auto HttpRequest::ReadData() -> QByteArray * { return data_buffer_; }
+
+void HttpRequest::DataReadFinished() {
+  if (reply_->error()) {
+    qDebug() << "Error : " << reply_->errorString();
   } else {
-    qDebug() << QString(*buffer_);
+    std::cout << data_buffer_->toStdString() << std::endl;
+    emit dataReady();
   }
-  r->deleteLater();
-};
+}

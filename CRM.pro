@@ -1,8 +1,8 @@
-QT       += core gui network
+QT       += core gui network sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-CONFIG += c++11
+CONFIG += c++17
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -14,6 +14,7 @@ SOURCES += \
     view/mainwindow.cpp \
     helpers/file_utility.cpp \
     helpers/http_request.cpp \
+    view/widgets/leadswidget.cpp
 
 HEADERS += \
     controller/controller.h \
@@ -22,10 +23,12 @@ HEADERS += \
     helpers/file_utility.h \
     helpers/http_request.h \
     helpers/constants.h \
+    view/widgets/leadswidget.h
 
 
 FORMS += \
-    view/mainwindow.ui
+    view/mainwindow.ui \
+    view/widgets/leadswidget.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
