@@ -2,7 +2,7 @@
 
 Controller::Controller(QObject *parent)
     : QObject(parent), request_(new HttpRequest) {
-  connect(request_, &HttpRequest::dataReady, this, &Controller::ReadData);
+  connect(request_, &HttpRequest::dataReady, this, &Controller::DispatchData);
 }
 
 Controller::~Controller() { delete request_; };
@@ -11,9 +11,10 @@ auto Controller::Init() -> void {
   FileUtility f;
   std::string path = "/home/igor/Movavi/CRM/keys/keys.csv";
   keys_ = f.GetKeys(path);
-  for (auto el : keys_) {
-    std::cout << std::setw(40) << el.first << "  |  " << el.second << std::endl;
-  }
+  //  for (auto el : keys_) {
+  //    std::cout << std::setw(40) << el.first << "  |  " << el.second <<
+  //    std::endl;
+  //  }
 }
 
 auto Controller::GetLeads(QUrlQuery params) -> void {
@@ -44,7 +45,7 @@ auto Controller::GetOffices() -> void {
   request_->MakeHTTPRequest(path, params);
 };
 
-auto Controller::ReadData() -> void {
+auto Controller::ExportData() -> void {
   QString path = "./out.json";
   QFile file(path);
   if (file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
@@ -56,3 +57,15 @@ auto Controller::ReadData() -> void {
     std::cout << "file open failed: " << path.toStdString() << std::endl;
   }
 }
+
+void Controller::DispatchData() {
+  ExportData();
+  emit dataReady();
+}
+
+auto Controller::GetJsonData() -> QJsonArray {
+  QByteArray *raw_data = request_->ReadData();
+  QJsonDocument json_data = QJsonDocument::fromJson(*raw_data);
+  QJsonObject rootObject = json_data.object();
+  return rootObject.value("Leads").toArray();
+};

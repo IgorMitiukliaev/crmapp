@@ -1,10 +1,10 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
-#include <QObject>
-#include <QUrlQuery>
 #include <QFile>
+#include <QObject>
 #include <QTextStream>
+#include <QUrlQuery>
 #include <iomanip>
 
 #include "helpers/file_utility.h"
@@ -19,9 +19,14 @@ class Controller : public QObject {
   auto GetLeads(QUrlQuery params) -> void;
   auto GetOffices() -> void;
   auto GetHistoryModifyLeadStatus() -> void;
+  auto GetJsonData() -> QJsonArray;
+
+ signals:
+  void dataReady();
 
  public slots:
-  auto ReadData() -> void;
+  auto ExportData() -> void;
+  auto DispatchData() -> void;
 
  private:
   std::map<std::string, std::string> keys_;

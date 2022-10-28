@@ -42,13 +42,15 @@ auto MainWindow::SetupMenu() -> void {
   connect(load_history_modify_lead_status, &QAction::triggered,
           [this]() { controller_->GetHistoryModifyLeadStatus(); });
   leads_menu->addAction(load_history_modify_lead_status);
-
-
 }
 
 void MainWindow::SetupLeadsWidget() {
-    child_widget_ = new LeadsWidget(controller_, ui->centralwidget);
-  ui->gridLayout->addWidget(child_widget_);
+  QMdiSubWindow *new_window = new QMdiSubWindow(this);
+  child_widget_ = new LeadsWidget(controller_, this);
+  new_window->setWidget(child_widget_);
+  new_window->setAttribute(Qt::WA_DeleteOnClose);
+  ui->mdiArea->addSubWindow(new_window);
+  new_window->show();
 }
 
 auto MainWindow::GetLeads() -> void {

@@ -3,6 +3,8 @@
 
 #include <QDialog>
 #include <QLineEdit>
+#include <QMenu>
+#include <QString>
 
 #include "controller/controller.h"
 
@@ -21,12 +23,15 @@ class LeadsWidget : public QDialog {
   void on_chb_a_toggled(bool checked);
   void on_chb_b_toggled(bool checked);
   void on_btn_OK_clicked();
+  void display_data();
+//  void handle_context_menu(const QPoint &pos);
 
  private:
   Ui::LeadsWidget *ui;
   Controller *controller_;
   QUrlQuery params_;
   void SetParams();
+//  void ShowItem(QJsonObject obj);
 };
 
 #endif  // LEADSWIDGET_H

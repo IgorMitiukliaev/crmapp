@@ -13,6 +13,8 @@ LeadsWidget::LeadsWidget(Controller *controller, QWidget *parent)
   ui->addressDateTo->setDate(date);
   ui->createdTo->setDate(date);
   ui->createdFrom->setDate(date);
+  connect(controller_, &Controller::dataReady, this,
+          &LeadsWidget::display_data);
 }
 
 LeadsWidget::~LeadsWidget() { delete ui; }
@@ -31,31 +33,63 @@ void LeadsWidget::on_btn_OK_clicked() {
   controller_->GetLeads(params_);
 }
 
+void LeadsWidget::display_data() {
+  QJsonArray leadsArray = controller_->GetJsonData();
+  qDebug() << "LEADS: " << leadsArray.size();
+  //  qDebug() << leadsArray;
+  QTableWidget *tbl = ui->tableWidget;
+  tbl->clear();
+  QStringList labels{"Id",         "LastName", "FirstName",
+                     "Discipline", "Status",   "Created"};
+  tbl->setColumnCount(labels.size());
+  tbl->setRowCount(1);
+  tbl->setHorizontalHeaderLabels(labels);
+
+  int r = 0;
+  for (const QJsonValue &val : leadsArray) {
+    QJsonObject obj = val.toObject();
+    int c = 0;
+    for (const QString &key : labels) {
+      QString value;
+      qDebug() << "obj [" << key << "] = " << obj[key];
+      if (obj[key].type() == QJsonValue::Double)
+        value = QString::number(obj[key].toDouble());
+      else
+        value = obj[key].toString();
+      auto *it = new QTableWidgetItem(value);
+      tbl->setItem(r, c, it);
+      c++;
+    }
+    tbl->insertRow(++r);
+  }
+}
+
 void LeadsWidget::SetParams() {
   params_.clear();
   QString value = ui->id->text();
-  if (value != "") params_.addQueryItem("id", value);
+  if (value != "") params_.addQueryItem("Id", value);
 
   value = ui->studentClientId->text();
   if (value != "") params_.addQueryItem("studentClientId", value);
 
   value = ui->term->text();
-  if (value != "") params_.addQueryItem("term", value);
-
-  value = ui->byAgents->isChecked() ? "true" : "false";
-  params_.addQueryItem("byAgents", value);
+  if (value != "") {
+    params_.addQueryItem("term", value);
+    value = ui->byAgents->isChecked() ? "true" : "false";
+    params_.addQueryItem("byAgents", value);
+  }
 
   int attached = ui->attached->currentIndex();
   switch (attached) {
     case 1:
-      params_.addQueryItem("attached", "null");
+      params_.addQueryItem("attached", "true");
       break;
     case 2:
-      params_.addQueryItem("attached", "true");
+      params_.addQueryItem("attached", "false");
       break;
     case 0:
     default:
-      params_.addQueryItem("attached", "false");
+      params_.addQueryItem("attached", "null");
   };
 
   if (ui->chb_a->isChecked()) {

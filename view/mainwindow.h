@@ -2,10 +2,10 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QMdiSubWindow>
 
-#include "controller/controller.h"
 #include "./widgets/leadswidget.h"
-
+#include "controller/controller.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -22,6 +22,7 @@ class MainWindow : public QMainWindow {
 
  private:
   Ui::MainWindow *ui;
+//  QMdiSubWindow *NewWindow();
   QMenuBar *menu_bar_;
   QWidget *child_widget_;
   Controller *controller_;
