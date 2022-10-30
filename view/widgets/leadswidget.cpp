@@ -6,6 +6,7 @@ LeadsWidget::LeadsWidget(Controller *controller, QWidget *parent)
     : QDialog(parent),
       ui(new Ui::LeadsWidget),
       controller_(controller),
+      model_(controller_->ShareModel()),
       params_() {
   QDate date = QDate::currentDate();
   ui->setupUi(this);
@@ -13,8 +14,15 @@ LeadsWidget::LeadsWidget(Controller *controller, QWidget *parent)
   ui->addressDateTo->setDate(date);
   ui->createdTo->setDate(date);
   ui->createdFrom->setDate(date);
-  connect(controller_, &Controller::dataReady, this,
-          &LeadsWidget::display_data);
+  ui->tableView->setModel(model_);
+  //  ui->tableView->resizeColumnsToContents();
+  //  connect(controller_, &Controller::dataReady, this,
+  //          &LeadsWidget::display_data);
+  //  connect(model_, &QSqlRelationalTableModel::dataChanged, this, [this]() {
+  //    qDebug() << "\n\nROWS from widget = " << model_->rowCount();
+  //    model_->select();
+  //    ui->tableView->update();
+  //  });
 }
 
 LeadsWidget::~LeadsWidget() { delete ui; }
@@ -30,39 +38,44 @@ void LeadsWidget::on_chb_b_toggled(bool checked) {
 
 void LeadsWidget::on_btn_OK_clicked() {
   SetParams();
-  controller_->GetLeads(params_);
+  if (ui->chb_hist->isChecked())
+    controller_->GetGetHistoryModifyLeadStatus(params_);
+  else
+    controller_->GetDataFromApi("GetLeads", params_);
 }
 
-void LeadsWidget::display_data() {
-  QJsonArray leadsArray = controller_->GetJsonData();
-  qDebug() << "LEADS: " << leadsArray.size();
-  //  qDebug() << leadsArray;
-  QTableWidget *tbl = ui->tableWidget;
-  tbl->clear();
-  QStringList labels{"Id",         "LastName", "FirstName",
-                     "Discipline", "Status",   "Created"};
-  tbl->setColumnCount(labels.size());
-  tbl->setRowCount(1);
-  tbl->setHorizontalHeaderLabels(labels);
+// void LeadsWidget::display_data() {
+//   QJsonArray leadsArray = controller_->GetJsonData();
+//   // tableWidget has been set here
+//   QTableWidget *tbl = ui->tableWidget;
+//   tbl->clear();
+//   QStringList labels{
+//       "Id",        "LastName",   "FirstName", "Discipline",
+//       "Status",    "Created",    "Agents",    "OfficesAndCompanies",
+//       "Assignees", "ExtraFields"};
 
-  int r = 0;
-  for (const QJsonValue &val : leadsArray) {
-    QJsonObject obj = val.toObject();
-    int c = 0;
-    for (const QString &key : labels) {
-      QString value;
-      qDebug() << "obj [" << key << "] = " << obj[key];
-      if (obj[key].type() == QJsonValue::Double)
-        value = QString::number(obj[key].toDouble());
-      else
-        value = obj[key].toString();
-      auto *it = new QTableWidgetItem(value);
-      tbl->setItem(r, c, it);
-      c++;
-    }
-    tbl->insertRow(++r);
-  }
-}
+//  tbl->setColumnCount(labels.size());
+//  tbl->setRowCount(1);
+//  tbl->setHorizontalHeaderLabels(labels);
+
+//  int r = 0;
+//  for (const QJsonValue &val : leadsArray) {
+//    QJsonObject obj = val.toObject();
+//    int c = 0;
+//    for (const QString &key : labels) {
+//      QString value;
+//      //      qDebug() << "obj [" << key << "] = " << obj[key];
+//      if (obj[key].type() == QJsonValue::Double)
+//        value = QString::number(obj[key].toDouble());
+//      else
+//        value = obj[key].toString();
+//      auto *it = new QTableWidgetItem(value);
+//      tbl->setItem(r, c, it);
+//      c++;
+//    }
+//    tbl->insertRow(++r);
+//  }
+//}
 
 void LeadsWidget::SetParams() {
   params_.clear();
@@ -107,5 +120,5 @@ void LeadsWidget::SetParams() {
     params_.addQueryItem("createdFrom", createdFrom);
     params_.addQueryItem("createdTo", createdTo);
   }
-  qDebug() << params_.toString();
+  //  qDebug() << params_.toString();
 }

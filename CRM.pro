@@ -10,20 +10,23 @@ CONFIG += c++17
 
 SOURCES += \
     controller/controller.cpp \
-    main.cpp \
+    view/widgets/leadswidget.cpp \
+    model/sqlrelationaltablemodel.cpp \
     view/mainwindow.cpp \
     helpers/file_utility.cpp \
     helpers/http_request.cpp \
-    view/widgets/leadswidget.cpp
+    main.cpp \
 
 HEADERS += \
     controller/controller.h \
+    view/widgets/leadswidget.h \
     helpers/constants.h \
+    model/sqlrelationaltablemodel.h \
     view/mainwindow.h \
     helpers/file_utility.h \
     helpers/http_request.h \
-    helpers/constants.h \
-    view/widgets/leadswidget.h
+
+
 
 
 FORMS += \

@@ -23,15 +23,17 @@ class LeadsWidget : public QDialog {
   void on_chb_a_toggled(bool checked);
   void on_chb_b_toggled(bool checked);
   void on_btn_OK_clicked();
-  void display_data();
-//  void handle_context_menu(const QPoint &pos);
+  //  void display_data();
+  //  void display_sql_data();
+  //  void handle_context_menu(const QPoint &pos);
 
  private:
   Ui::LeadsWidget *ui;
   Controller *controller_;
+  QSqlTableModel *model_;
   QUrlQuery params_;
   void SetParams();
-//  void ShowItem(QJsonObject obj);
+  //  void ShowItem(QJsonObject obj);
 };
 
 #endif  // LEADSWIDGET_H

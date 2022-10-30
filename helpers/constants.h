@@ -64,6 +64,9 @@ typedef enum {
   AddStudyRequest
 } RequestName;
 
+
+
 const QUrl API_ENDPOINT("https://movavischool.t8s.ru/Api/V2/");
 
 }  // namespace crm
+

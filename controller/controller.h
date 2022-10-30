@@ -9,6 +9,7 @@
 
 #include "helpers/file_utility.h"
 #include "helpers/http_request.h"
+#include "model/sqlrelationaltablemodel.h"
 
 class Controller : public QObject {
   Q_OBJECT
@@ -16,13 +17,10 @@ class Controller : public QObject {
   Controller(QObject* parent = nullptr);
   ~Controller();
   auto Init() -> void;
-  auto GetLeads(QUrlQuery params) -> void;
-  auto GetOffices() -> void;
-  auto GetHistoryModifyLeadStatus() -> void;
+  auto GetDataFromApi(QString path, QUrlQuery params) -> void;
   auto GetJsonData() -> QJsonArray;
-
- signals:
-  void dataReady();
+  inline auto ShareModel() -> QSqlTableModel* { return model_sqlr_->model_; };
+  auto GetGetHistoryModifyLeadStatus(QUrlQuery params_) -> bool;
 
  public slots:
   auto ExportData() -> void;
@@ -31,6 +29,9 @@ class Controller : public QObject {
  private:
   std::map<std::string, std::string> keys_;
   HttpRequest* request_;
+  SqlRelationalTableModel* model_sqlr_;
+  auto GetKey(QString path) -> QByteArray;
+  auto ExportLeadsToModel() -> void;
 };
 
 #endif  // CONTROLLER_H

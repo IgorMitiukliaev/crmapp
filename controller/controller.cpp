@@ -1,47 +1,25 @@
 #include "controller.h"
 
 Controller::Controller(QObject *parent)
-    : QObject(parent), request_(new HttpRequest) {
+    : QObject(parent),
+      request_(new HttpRequest),
+      model_sqlr_(new SqlRelationalTableModel) {
   connect(request_, &HttpRequest::dataReady, this, &Controller::DispatchData);
 }
 
-Controller::~Controller() { delete request_; };
+Controller::~Controller() {
+  delete request_;
+  delete model_sqlr_;
+};
 
 auto Controller::Init() -> void {
   FileUtility f;
   std::string path = "/home/igor/Movavi/CRM/keys/keys.csv";
   keys_ = f.GetKeys(path);
-  //  for (auto el : keys_) {
-  //    std::cout << std::setw(40) << el.first << "  |  " << el.second <<
-  //    std::endl;
-  //  }
 }
 
-auto Controller::GetLeads(QUrlQuery params) -> void {
-  QString path = "GetLeads";
-  std::string key = keys_.at(path.toStdString());
-  params.addQueryItem("authkey",
-                      QUrl::toPercentEncoding(QString::fromStdString(key)));
-  request_->MakeHTTPRequest(path, params);
-};
-
-auto Controller::GetHistoryModifyLeadStatus() -> void {
-  QUrlQuery params;
-  params.addQueryItem("dateTimeFrom", "2022-09-05");
-  params.addQueryItem("dateTimeTo", "2022-09-15");
-  QString path = "GetHistoryModifyLeadStatus";
-  std::string key = keys_.at(path.toStdString());
-  params.addQueryItem("authkey",
-                      QUrl::toPercentEncoding(QString::fromStdString(key)));
-  request_->MakeHTTPRequest(path, params);
-};
-
-auto Controller::GetOffices() -> void {
-  QUrlQuery params;
-  QString path = "GetOffices";
-  std::string key = keys_.at(path.toStdString());
-  params.addQueryItem("authkey",
-                      QUrl::toPercentEncoding(QString::fromStdString(key)));
+auto Controller::GetDataFromApi(QString path, QUrlQuery params) -> void {
+  params.addQueryItem("authkey", GetKey(path));
   request_->MakeHTTPRequest(path, params);
 };
 
@@ -60,7 +38,17 @@ auto Controller::ExportData() -> void {
 
 void Controller::DispatchData() {
   ExportData();
-  emit dataReady();
+  ExportLeadsToModel();
+}
+
+auto Controller::GetKey(QString path) -> QByteArray {
+  std::string key = keys_.at(path.toStdString());
+  return QUrl::toPercentEncoding(QString::fromStdString(key));
+}
+
+void Controller::ExportLeadsToModel() {
+  QJsonArray data = GetJsonData();
+  model_sqlr_->SetTable("leads", data);
 }
 
 auto Controller::GetJsonData() -> QJsonArray {
@@ -68,4 +56,19 @@ auto Controller::GetJsonData() -> QJsonArray {
   QJsonDocument json_data = QJsonDocument::fromJson(*raw_data);
   QJsonObject rootObject = json_data.object();
   return rootObject.value("Leads").toArray();
+}
+
+bool Controller::GetGetHistoryModifyLeadStatus(QUrlQuery params) {
+  QString path = "GetLeads";
+  params.addQueryItem("authkey", GetKey(path));
+  request_->MakeHTTPRequest(path, params);
+  QJsonArray data = GetJsonData();
+  model_sqlr_->SetTable("leads", data, false);
+
+  path = "GetHistoryModifyLeadStatus";
+  params.addQueryItem("authkey", GetKey(path));
+  request_->MakeHTTPRequest(path, params);
+  data = GetJsonData();
+  model_sqlr_->SetTable("leads_history", data, false);
+  return true;
 };

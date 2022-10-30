@@ -25,8 +25,10 @@ auto MainWindow::SetupMenu() -> void {
   QMenu *leads_menu = menu_bar_->addMenu("Leads");
 
   QAction *load_offices = new QAction("Load offices");
-  connect(load_offices, &QAction::triggered,
-          [this]() { controller_->GetOffices(); });
+  connect(load_offices, &QAction::triggered, [this]() {
+    QUrlQuery params{};
+    controller_->GetDataFromApi("GetOffices", params);
+  });
   file_menu->addAction(load_offices);
 
   QAction *quit_app = new QAction("Quit application");
@@ -39,8 +41,7 @@ auto MainWindow::SetupMenu() -> void {
 
   QAction *load_history_modify_lead_status =
       new QAction("Load History Modify Lead Status");
-  connect(load_history_modify_lead_status, &QAction::triggered,
-          [this]() { controller_->GetHistoryModifyLeadStatus(); });
+  connect(load_history_modify_lead_status, &QAction::triggered, []() {});
   leads_menu->addAction(load_history_modify_lead_status);
 }
 
