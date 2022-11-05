@@ -15,14 +15,8 @@ LeadsWidget::LeadsWidget(Controller *controller, QWidget *parent)
   ui->createdTo->setDate(date);
   ui->createdFrom->setDate(date);
   ui->tableView->setModel(model_);
-  //  ui->tableView->resizeColumnsToContents();
-  //  connect(controller_, &Controller::dataReady, this,
-  //          &LeadsWidget::display_data);
-  //  connect(model_, &QSqlRelationalTableModel::dataChanged, this, [this]() {
-  //    qDebug() << "\n\nROWS from widget = " << model_->rowCount();
-  //    model_->select();
-  //    ui->tableView->update();
-  //  });
+  connect(ui->tableView, SIGNAL(customContextMenuRequested(QPoint)),
+          SLOT(customMenuRequested(QPoint)));
 }
 
 LeadsWidget::~LeadsWidget() { delete ui; }
@@ -31,6 +25,7 @@ void LeadsWidget::on_chb_a_toggled(bool checked) {
   ui->addressDateFrom->setEnabled(checked);
   ui->addressDateTo->setEnabled(checked);
 }
+
 void LeadsWidget::on_chb_b_toggled(bool checked) {
   ui->createdTo->setEnabled(checked);
   ui->createdFrom->setEnabled(checked);
@@ -79,6 +74,7 @@ void LeadsWidget::on_btn_OK_clicked() {
 
 void LeadsWidget::SetParams() {
   params_.clear();
+
   QString value = ui->id->text();
   if (value != "") params_.addQueryItem("Id", value);
 
@@ -105,20 +101,58 @@ void LeadsWidget::SetParams() {
       params_.addQueryItem("attached", "null");
   };
 
+  QDate addressDateFrom;
+  QDate addressDateTo;
+  QDate createdFrom;
+  QDate createdTo;
+  QDate dateTimeFrom;
+
   if (ui->chb_a->isChecked()) {
-    QString addressDateFrom =
-        ui->addressDateFrom->date().toString(Qt::ISODateWithMs);
-    QString addressDateTo =
-        ui->addressDateTo->date().toString(Qt::ISODateWithMs);
-    params_.addQueryItem("addressDateFrom", addressDateFrom);
-    params_.addQueryItem("addressDateTo", addressDateTo);
+    addressDateFrom = ui->addressDateFrom->date();
+    addressDateTo = ui->addressDateTo->date();
+    params_.addQueryItem("addressDateFrom",
+                         addressDateFrom.toString(Qt::ISODateWithMs));
+    params_.addQueryItem("addressDateTo",
+                         addressDateTo.toString(Qt::ISODateWithMs));
   }
 
   if (ui->chb_b->isChecked()) {
-    QString createdFrom = ui->createdFrom->date().toString(Qt::ISODateWithMs);
-    QString createdTo = ui->createdTo->date().toString(Qt::ISODateWithMs);
-    params_.addQueryItem("createdFrom", createdFrom);
-    params_.addQueryItem("createdTo", createdTo);
+    createdFrom = ui->createdFrom->date();
+    createdTo = ui->createdTo->date();
+    params_.addQueryItem("createdFrom",
+                         createdFrom.toString(Qt::ISODateWithMs));
+    params_.addQueryItem("createdTo", createdTo.toString(Qt::ISODateWithMs));
   }
+
+  if (ui->chb_hist->isChecked()) {
+    if (ui->chb_a->isChecked() && ui->chb_b->isChecked()) {
+      dateTimeFrom = std::min(addressDateFrom, createdFrom);
+    } else if (ui->chb_a->isChecked()) {
+      dateTimeFrom = addressDateFrom;
+    } else if (ui->chb_b->isChecked()) {
+      dateTimeFrom = createdFrom;
+    }
+
+    if (ui->chb_a->isChecked() || ui->chb_b->isChecked()) {
+      params_.addQueryItem("dateTimeFrom",
+                           dateTimeFrom.toString(Qt::ISODateWithMs));
+    }
+    if (params_.hasQueryItem("Id"))
+      params_.addQueryItem("LeadId", params_.queryItemValue("Id"));
+    params_.addQueryItem("take", "9999");
+  }
+
   //  qDebug() << params_.toString();
+}
+
+void LeadsWidget::on_btn_get_history__modify_lead_status_clicked() {}
+
+void LeadsWidget::on_btn_get_ed_unit_students_clicked() {}
+
+void LeadsWidget::customMenuRequested(QPoint pos) {
+  int column = ui->tableView->horizontalHeader()->logicalIndexAt(pos);
+  qDebug() << column;
+  QMenu *menu=new QMenu(this);
+  menu->addSection(QString::number(column));
+  menu->popup(ui->tableView->horizontalHeader()->viewport()->mapToGlobal(pos));
 }

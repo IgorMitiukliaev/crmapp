@@ -51,7 +51,7 @@ void MainWindow::SetupLeadsWidget() {
   new_window->setWidget(child_widget_);
   new_window->setAttribute(Qt::WA_DeleteOnClose);
   ui->mdiArea->addSubWindow(new_window);
-  new_window->show();
+  new_window->showMaximized();
 }
 
 auto MainWindow::GetLeads() -> void {

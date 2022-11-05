@@ -18,7 +18,7 @@ auto HttpRequest::MakeHTTPRequest(QString &req_type, QUrlQuery &param) -> void {
   url.setHost("movavischool.t8s.ru");
   url.setPath("/Api/V2/" + req_type);
   url.setQuery(param.toString());
-
+  qDebug() << "\n\nParams = " << param.toString();
   QNetworkRequest request;
   request.setUrl(url);
   reply_ = manager_->get(request);
@@ -30,7 +30,7 @@ void HttpRequest::DataReadyRead() {
 }
 
 auto HttpRequest::ReadData() -> QByteArray * {
-  //  qDebug() << "RESPONSE:\n" << *data_buffer_;
+  qDebug() << "RESPONSE:\n" << *data_buffer_->toBase64();
   return data_buffer_;
 }
 

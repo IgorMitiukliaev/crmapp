@@ -18,15 +18,19 @@ class Controller : public QObject {
   ~Controller();
   auto Init() -> void;
   auto GetDataFromApi(QString path, QUrlQuery params) -> void;
-  auto GetJsonData() -> QJsonArray;
+  auto GetJsonData(QString&, QJsonArray&) -> void;
   inline auto ShareModel() -> QSqlTableModel* { return model_sqlr_->model_; };
   auto GetGetHistoryModifyLeadStatus(QUrlQuery params_) -> bool;
 
  public slots:
   auto ExportData() -> void;
   auto DispatchData() -> void;
+  auto Dispatcher(QString) -> void;
 
  private:
+  QString current_process_;
+  QUrlQuery current_params_;
+  QSet<QString> buffer_;
   std::map<std::string, std::string> keys_;
   HttpRequest* request_;
   SqlRelationalTableModel* model_sqlr_;
