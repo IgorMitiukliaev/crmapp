@@ -21,9 +21,95 @@ auto Controller::Init() -> void {
 }
 
 auto Controller::GetDataFromApi(QString path, QUrlQuery params) -> void {
+  current_process_ = path;
   params.addQueryItem("authkey", GetKey(path));
   request_->MakeHTTPRequest(path, params);
 };
+
+bool Controller::GetFullLeadsData(QUrlQuery params) {
+  current_process_ = "GetLeads";
+  current_params_ = params;
+  Dispatcher(current_process_);
+  return true;
+}
+
+auto Controller::Dispatcher(QString name) -> void {
+  if (current_process_ == "GetLeads") {
+    if (name == "GetLeads") {
+      QString path = "GetLeads";
+      current_params_.addQueryItem("authkey", GetKey(path));
+      request_->MakeHTTPRequest(path, current_params_);
+    } else if (name == "Leads") {
+      current_process_ = "GetHistoryModifyLeadStatus";
+      current_params_.clear();
+      current_params_.addQueryItem("authkey", GetKey(current_process_));
+      model_sqlr_->GetValuesFromTable("Leads", "Id", buffer_);
+    }
+  } else if (current_process_ == "GetHistoryModifyLeadStatus") {
+    if ((name == "Actions" || name == "GetValuesFromTable_Leads_Id")) {
+      qDebug() << buffer_;
+      qDebug() << buffer_.size();
+
+      QSet<QString> buffer_tmp = buffer_;
+      QSet<QString>::Iterator it = buffer_tmp.begin();
+      if (it->length() > 0) {
+        current_params_.addQueryItem("LeadId", *it);
+        buffer_tmp.erase(it);
+        qDebug() << "\nBUFFER = " << buffer_tmp;
+        buffer_ = buffer_tmp;
+        request_->MakeHTTPRequest(current_process_, current_params_);
+      } else if (it->length() == 0) {
+        current_process_ = "GetEdUnitLeads";
+        current_params_.clear();
+        model_sqlr_->GetValuesFromTable("Leads", "Id", buffer_);
+      }
+    }
+  } else if (current_process_ == "GetEdUnitLeads") {
+    if ((name == "EdUnitLeads" || name == "GetValuesFromTable_Leads_Id") &&
+        buffer_.size() > 0) {
+      current_params_.addQueryItem("authkey", GetKey(current_process_));
+      QSet<QString> buffer_tmp = buffer_;
+      QSet<QString>::Iterator it = buffer_tmp.begin();
+      if (it->length() > 0) {
+        current_params_.addQueryItem("LeadId", *it);
+        buffer_tmp.erase(it);
+        buffer_ = buffer_tmp;
+        qDebug() << "\nBUFFER = " << buffer_;
+        request_->MakeHTTPRequest(current_process_, current_params_);
+      } else if (it->length() == 0) {
+        model_sqlr_->SelectTable("Leads");
+        //      current_process_ = "";
+        //      current_params_.clear();
+      }
+    }
+  }
+}
+
+void Controller::DispatchData() {
+  ExportData();
+  if (current_process_ == "GetLeads") {
+    ExportLeadsToModel();
+  } else {
+    ExportDataToModel();
+  }
+}
+
+void Controller::ExportDataToModel() {
+  QJsonArray data{};
+  QString tbl_name;
+  GetJsonData(tbl_name, data);
+  model_sqlr_->CreateTable(tbl_name, data, nullptr, false);
+}
+
+void Controller::ExportLeadsToModel() {
+  QJsonArray data{};
+  QString tbl_name;
+  QMap<QString, QString> extra_fields;
+  extra_fields.insert("Actions", "...");
+  GetJsonData(tbl_name, data);
+  model_sqlr_->CreateTable(tbl_name, data, &extra_fields, false);
+  model_sqlr_->SelectTable("Leads");
+}
 
 auto Controller::ExportData() -> void {
   QString path = "./out.json";
@@ -38,21 +124,9 @@ auto Controller::ExportData() -> void {
   }
 }
 
-void Controller::DispatchData() {
-  ExportData();
-  ExportLeadsToModel();
-}
-
 auto Controller::GetKey(QString path) -> QByteArray {
   std::string key = keys_.at(path.toStdString());
   return QUrl::toPercentEncoding(QString::fromStdString(key));
-}
-
-void Controller::ExportLeadsToModel() {
-  QJsonArray data{};
-  QString tbl_name;
-  GetJsonData(tbl_name, data);
-  model_sqlr_->CreateTable(tbl_name, data, nullptr, true);
 }
 
 auto Controller::GetJsonData(QString& table_name, QJsonArray& data) -> void {
@@ -64,55 +138,12 @@ auto Controller::GetJsonData(QString& table_name, QJsonArray& data) -> void {
   data = rootObject.value(table_name).toArray();
 }
 
-bool Controller::GetGetHistoryModifyLeadStatus(QUrlQuery params) {
-  current_process_ = "GetGetHistoryModifyLeadStatus";
-  current_params_ = params;
-  Dispatcher(current_process_);
-  return true;
-}
+void Controller::ClearDb() { model_sqlr_->ClearDb(); }
 
-auto Controller::Dispatcher(QString name) -> void {
-  if (name == "GetGetHistoryModifyLeadStatus" &&
-      current_process_ == "GetGetHistoryModifyLeadStatus") {
-    qDebug() << "\n\nDispatcher fired with " << name;
-    QString path = "GetLeads";
-    QUrlQuery params_tmp = current_params_;
-    params_tmp.addQueryItem("authkey", GetKey(path));
-    params_tmp.removeQueryItem("dateTimeFrom");
-    params_tmp.removeQueryItem("dateTimeTo");
-    params_tmp.removeQueryItem("LeadId");
-    request_->MakeHTTPRequest(path, params_tmp);
-
-  } else if (name == "Leads" &&
-             current_process_ == "GetGetHistoryModifyLeadStatus") {
-    qDebug() << "\n\nDispatcher fired with " << name;
-    QUrlQuery params_tmp = current_params_;
-    params_tmp.removeQueryItem("Id");
-    params_tmp.removeQueryItem("addressDateFrom");
-    params_tmp.removeQueryItem("addressDateTo");
-    params_tmp.removeQueryItem("createdFrom");
-    params_tmp.removeQueryItem("createdTo");
-    params_tmp.removeQueryItem("attached");
-    QString path = "GetHistoryModifyLeadStatus";
-    params_tmp.addQueryItem("authkey", GetKey(path));
-    request_->MakeHTTPRequest(path, params_tmp);
-  } else if (name == "Actions" &&
-             current_process_ == "GetGetHistoryModifyLeadStatus") {
-    qDebug() << "\n\nDispatcher fired with " << name;
-    buffer_ = model_sqlr_->GetHistoryModifyLeadStatus();
-
-  } else if (name == "StudentClientIdList" &&
-             current_process_ == "GetGetHistoryModifyLeadStatus") {
-    qDebug() << "\n\nDispatcher fired with " << name;
-    QString path = "GetEdUnitStudents";
-    current_params_.clear();
-    current_params_.addQueryItem("authkey", GetKey(path));
-    QSet<QString>::Iterator it = buffer_.begin();
-    while (it != buffer_.end()) {
-      qDebug() << *it;
-      ++it;
-    }
-    current_process_ = "";
-    current_params_.clear();
-  }
-}
+// bool Controller::GetHistoryModifyLeadStatus() {
+//   current_process_ = "GetHistoryModifyLeadStatus";
+//   QUrlQuery params{};
+//   params.addQueryItem("authkey", GetKey(current_process_));
+//   request_->MakeHTTPRequest(current_process_, params);
+//   return true;
+// }

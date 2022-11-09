@@ -2,16 +2,20 @@
 #define LEADSWIDGET_H
 
 #include <QDialog>
+#include <QEvent>
+#include <QHelpEvent>
 #include <QLineEdit>
 #include <QMenu>
 #include <QString>
-#include <QEvent>
 
 #include "controller/controller.h"
+#include "tablewidget.h"
 
 namespace Ui {
 class LeadsWidget;
-}
+}  // namespace Ui
+
+class ArrayTableView;
 
 class LeadsWidget : public QDialog {
   Q_OBJECT
@@ -24,20 +28,31 @@ class LeadsWidget : public QDialog {
   void on_chb_a_toggled(bool checked);
   void on_chb_b_toggled(bool checked);
   void on_btn_OK_clicked();
-  //  void display_data();
-  //  void display_sql_data();
-  //  void handle_context_menu(const QPoint &pos);
-  void on_btn_get_history__modify_lead_status_clicked();
-  void on_btn_get_ed_unit_students_clicked();
-  void customMenuRequested(QPoint);
 
-private:
+ private:
   Ui::LeadsWidget *ui;
   Controller *controller_;
-  QSqlTableModel *model_;
+  QSqlRelationalTableModel *model_;
   QUrlQuery params_;
+  ArrayTableView *delegate_;
   void SetParams();
-  //  void ShowItem(QJsonObject obj);
+};
+
+class ArrayTableView : public QStyledItemDelegate {
+  Q_OBJECT
+
+ public:
+  explicit ArrayTableView(QObject *parent = nullptr);
+  ~ArrayTableView();
+
+  ArrayTableView(QObject *parent = nullptr, QSqlRelationalTableModel *model = nullptr);
+  bool editorEvent(QEvent *event, QAbstractItemModel *model,
+                   const QStyleOptionViewItem &option,
+                   const QModelIndex &index) override;
+
+ private:
+  ArrayTableView *ui;
+  QSqlRelationalTableModel *model_;
 };
 
 #endif  // LEADSWIDGET_H

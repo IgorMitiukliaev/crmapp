@@ -2,24 +2,32 @@
 
 #include "ui_leadswidget.h"
 
+using ::ArrayTableView;
+using ::LeadsWidget;
+
 LeadsWidget::LeadsWidget(Controller *controller, QWidget *parent)
     : QDialog(parent),
       ui(new Ui::LeadsWidget),
       controller_(controller),
       model_(controller_->ShareModel()),
       params_() {
-  QDate date = QDate::currentDate();
   ui->setupUi(this);
+  ui->tableView->setModel(model_);
+  delegate_ = new ArrayTableView(this, model_);
+  ui->tableView->setItemDelegate(delegate_);
+  ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+  QDate date = QDate::currentDate();
   ui->addressDateFrom->setDate(date);
   ui->addressDateTo->setDate(date);
   ui->createdTo->setDate(date);
   ui->createdFrom->setDate(date);
-  ui->tableView->setModel(model_);
-  connect(ui->tableView, SIGNAL(customContextMenuRequested(QPoint)),
-          SLOT(customMenuRequested(QPoint)));
 }
 
-LeadsWidget::~LeadsWidget() { delete ui; }
+LeadsWidget::~LeadsWidget() {
+  delete ui;
+  delete delegate_;
+}
 
 void LeadsWidget::on_chb_a_toggled(bool checked) {
   ui->addressDateFrom->setEnabled(checked);
@@ -33,59 +41,29 @@ void LeadsWidget::on_chb_b_toggled(bool checked) {
 
 void LeadsWidget::on_btn_OK_clicked() {
   SetParams();
+  controller_->ClearDb();
   if (ui->chb_hist->isChecked())
-    controller_->GetGetHistoryModifyLeadStatus(params_);
+    controller_->GetFullLeadsData(params_);
   else
     controller_->GetDataFromApi("GetLeads", params_);
 }
 
-// void LeadsWidget::display_data() {
-//   QJsonArray leadsArray = controller_->GetJsonData();
-//   // tableWidget has been set here
-//   QTableWidget *tbl = ui->tableWidget;
-//   tbl->clear();
-//   QStringList labels{
-//       "Id",        "LastName",   "FirstName", "Discipline",
-//       "Status",    "Created",    "Agents",    "OfficesAndCompanies",
-//       "Assignees", "ExtraFields"};
-
-//  tbl->setColumnCount(labels.size());
-//  tbl->setRowCount(1);
-//  tbl->setHorizontalHeaderLabels(labels);
-
-//  int r = 0;
-//  for (const QJsonValue &val : leadsArray) {
-//    QJsonObject obj = val.toObject();
-//    int c = 0;
-//    for (const QString &key : labels) {
-//      QString value;
-//      //      qDebug() << "obj [" << key << "] = " << obj[key];
-//      if (obj[key].type() == QJsonValue::Double)
-//        value = QString::number(obj[key].toDouble());
-//      else
-//        value = obj[key].toString();
-//      auto *it = new QTableWidgetItem(value);
-//      tbl->setItem(r, c, it);
-//      c++;
-//    }
-//    tbl->insertRow(++r);
-//  }
-//}
-
 void LeadsWidget::SetParams() {
+  QDate addressDateFrom;
+  QDate addressDateTo;
+  QDate createdFrom;
+  QDate createdTo;
+//  QDate dateTimeFrom;
+
   params_.clear();
-
   QString value = ui->id->text();
+  params_.addQueryItem("take", "9999");
   if (value != "") params_.addQueryItem("Id", value);
-
-  value = ui->studentClientId->text();
-  if (value != "") params_.addQueryItem("studentClientId", value);
 
   value = ui->term->text();
   if (value != "") {
     params_.addQueryItem("term", value);
-    value = ui->byAgents->isChecked() ? "true" : "false";
-    params_.addQueryItem("byAgents", value);
+    params_.addQueryItem("byAgents", "true");
   }
 
   int attached = ui->attached->currentIndex();
@@ -100,12 +78,6 @@ void LeadsWidget::SetParams() {
     default:
       params_.addQueryItem("attached", "null");
   };
-
-  QDate addressDateFrom;
-  QDate addressDateTo;
-  QDate createdFrom;
-  QDate createdTo;
-  QDate dateTimeFrom;
 
   if (ui->chb_a->isChecked()) {
     addressDateFrom = ui->addressDateFrom->date();
@@ -123,36 +95,61 @@ void LeadsWidget::SetParams() {
                          createdFrom.toString(Qt::ISODateWithMs));
     params_.addQueryItem("createdTo", createdTo.toString(Qt::ISODateWithMs));
   }
-
-  if (ui->chb_hist->isChecked()) {
-    if (ui->chb_a->isChecked() && ui->chb_b->isChecked()) {
-      dateTimeFrom = std::min(addressDateFrom, createdFrom);
-    } else if (ui->chb_a->isChecked()) {
-      dateTimeFrom = addressDateFrom;
-    } else if (ui->chb_b->isChecked()) {
-      dateTimeFrom = createdFrom;
-    }
-
-    if (ui->chb_a->isChecked() || ui->chb_b->isChecked()) {
-      params_.addQueryItem("dateTimeFrom",
-                           dateTimeFrom.toString(Qt::ISODateWithMs));
-    }
-    if (params_.hasQueryItem("Id"))
-      params_.addQueryItem("LeadId", params_.queryItemValue("Id"));
-    params_.addQueryItem("take", "9999");
-  }
-
-  //  qDebug() << params_.toString();
 }
 
-void LeadsWidget::on_btn_get_history__modify_lead_status_clicked() {}
+//
+// Delegate class
+//
 
-void LeadsWidget::on_btn_get_ed_unit_students_clicked() {}
+ArrayTableView::ArrayTableView(QObject *parent) : QStyledItemDelegate(parent) {}
 
-void LeadsWidget::customMenuRequested(QPoint pos) {
-  int column = ui->tableView->horizontalHeader()->logicalIndexAt(pos);
-  qDebug() << column;
-  QMenu *menu=new QMenu(this);
-  menu->addSection(QString::number(column));
-  menu->popup(ui->tableView->horizontalHeader()->viewport()->mapToGlobal(pos));
+ArrayTableView::ArrayTableView(QObject *parent, QSqlRelationalTableModel *model)
+    : QStyledItemDelegate(parent), model_(model) {}
+
+ArrayTableView::~ArrayTableView() { delete model_; }
+
+bool ArrayTableView::editorEvent(QEvent *e, QAbstractItemModel *model,
+                                 const QStyleOptionViewItem &option,
+                                 const QModelIndex &index) {
+  qDebug() << "\nHelp Event fired";
+  if (!e || !model) return false;
+
+  if (e->type() == QEvent::MouseButtonDblClick) {
+    QString val = model->data(index, Qt::DisplayRole).toString();
+
+    if (model_->record().fieldName(index.column()) == "Id") {
+      QString Id = model_->record(index.row()).field("Id").value().toString();
+      if (Id.length() > 0) {
+        QString tbl_new = "EdUnitLeads";
+        QString tbl_current = model_->tableName();
+        QSqlRelationalTableModel *tmp = new QSqlRelationalTableModel(model);
+        tmp->setTable(tbl_new);
+        QString filter = "LeadId=" + Id;
+        tmp->setFilter(filter);
+        tmp->select();
+        QDialog *popup = new TableWidget(nullptr, tmp);
+        popup->show();
+      }
+    }
+    if (val == "...") {
+      QString tbl_new = model_->record().fieldName(index.column());
+      QString Id = model_->record(index.row()).field("Id").value().toString();
+      QSqlRelationalTableModel *tmp = new QSqlRelationalTableModel(model);
+      QString tbl_current = model_->tableName();
+      tmp->setTable(tbl_new);
+      QString filter;
+      if (tbl_new == "Actions")
+        filter = "LeadId=" + Id;
+      else
+        filter = tbl_current + "_Id=" + Id;
+      //      qDebug() << "FILTER = " << filter;
+      tmp->setFilter(filter);
+      tmp->select();
+      QDialog *popup = new TableWidget(nullptr, tmp);
+      popup->show();
+    }
+
+    return true;
+  }
+  return QStyledItemDelegate::editorEvent(e, model, option, index);
 }

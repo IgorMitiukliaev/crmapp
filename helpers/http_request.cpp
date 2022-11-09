@@ -5,8 +5,8 @@ HttpRequest::HttpRequest(QObject *parent)
       manager_(new QNetworkAccessManager(this)),
       reply_(nullptr),
       data_buffer_(new QByteArray) {
-  connect(manager_, &QNetworkAccessManager::finished, this,
-          &HttpRequest::DataReadFinished);
+//  connect(manager_, &QNetworkAccessManager::finished, this,
+//          &HttpRequest::DataReadFinished);
 }
 
 HttpRequest::~HttpRequest() {}
@@ -22,21 +22,20 @@ auto HttpRequest::MakeHTTPRequest(QString &req_type, QUrlQuery &param) -> void {
   QNetworkRequest request;
   request.setUrl(url);
   reply_ = manager_->get(request);
+  auto future = QtFuture::connect(reply_, &QNetworkReply::finished);
+  future.then([this]() { return DataReadFinished(); });
 }
 
-void HttpRequest::DataReadyRead() {
-  data_buffer_->clear();
-  data_buffer_->append(reply_->readAll());
-}
+//void HttpRequest::DataReadyRead() {
+//  data_buffer_->clear();
+//  data_buffer_->append(reply_->readAll());
+//}
 
-auto HttpRequest::ReadData() -> QByteArray * {
-  qDebug() << "RESPONSE:\n" << *data_buffer_->toBase64();
-  return data_buffer_;
-}
+auto HttpRequest::ReadData() -> QByteArray * { return data_buffer_; }
 
 void HttpRequest::DataReadFinished() {
   if (reply_->error()) {
-    qDebug() << "Error : " << reply_->errorString();
+    //    qDebug() << "Error : " << reply_->errorString();
   } else {
     data_buffer_->append(reply_->readAll());
     std::cout << data_buffer_->toStdString() << std::endl;

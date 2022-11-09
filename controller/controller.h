@@ -19,8 +19,12 @@ class Controller : public QObject {
   auto Init() -> void;
   auto GetDataFromApi(QString path, QUrlQuery params) -> void;
   auto GetJsonData(QString&, QJsonArray&) -> void;
-  inline auto ShareModel() -> QSqlTableModel* { return model_sqlr_->model_; };
-  auto GetGetHistoryModifyLeadStatus(QUrlQuery params_) -> bool;
+  inline auto ShareModel() -> QSqlRelationalTableModel* {
+    return model_sqlr_->model_;
+  };
+  auto GetFullLeadsData(QUrlQuery params_) -> bool;
+//  auto GetHistoryModifyLeadStatus() -> bool;
+  auto ClearDb() -> void;
 
  public slots:
   auto ExportData() -> void;
@@ -35,6 +39,7 @@ class Controller : public QObject {
   HttpRequest* request_;
   SqlRelationalTableModel* model_sqlr_;
   auto GetKey(QString path) -> QByteArray;
+  void ExportDataToModel();
   auto ExportLeadsToModel() -> void;
 };
 

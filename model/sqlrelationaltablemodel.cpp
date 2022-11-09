@@ -11,7 +11,6 @@ SqlRelationalTableModel::SqlRelationalTableModel(QObject *parent)
   qDebug() << db_.open();
   model_ = new QSqlRelationalTableModel(nullptr, db_);
   model_->setEditStrategy(QSqlTableModel::OnManualSubmit);
-  //  model_->setHeaderData(0, Qt::Horizontal, "dsfdf", Qt::ToolTipRole);
 
   QSqlQuery query;
 }
@@ -26,17 +25,6 @@ SqlRelationalTableModel::~SqlRelationalTableModel() {
     ++it;
   }
   if (db_.isOpen()) db_.close();
-}
-
-QVariant SqlRelationalTableModel::data(const QModelIndex &index,
-                                       int role) const {
-  qDebug() << "\nTOOLTIP \n";
-  QVariant value = model_->data(index, role);
-  switch (role) {
-    case Qt::ToolTipRole:
-      return model_->data(index);
-  }
-  return value;
 }
 
 auto SqlRelationalTableModel::DefineLabels(const QJsonArray &data)
@@ -54,15 +42,13 @@ auto SqlRelationalTableModel::DefineLabels(const QJsonArray &data)
 
 bool SqlRelationalTableModel::CreateTable(const QString tbl_name,
                                           const QJsonArray &data,
-                                          QMap<QString, int> *extra_fields,
+                                          QMap<QString, QString> *extra_fields,
                                           bool show) {
   bool res = true;
   QSqlQuery query;
-//  query.exec("DROP TABLE IF EXISTS " + tbl_name + ";");
-
   QStringList labels = DefineLabels(data);
   if (extra_fields != nullptr) {
-    QMap<QString, int>::ConstIterator it = extra_fields->begin();
+    QMap<QString, QString>::ConstIterator it = extra_fields->begin();
     while (it != extra_fields->end()) {
       labels.append(it.key());
       ++it;
@@ -71,18 +57,16 @@ bool SqlRelationalTableModel::CreateTable(const QString tbl_name,
 
   QString request = "create table if not exists " + tbl_name +
                     " ("
-                    "Id integer,";
+                    "Id VARCHAR[256],";
 
   for (QString label : labels)
-    if (label != "Id") request.append(label + " VARCHAR[1000] default NULL,");
+    if (label != "Id") request.append(label + " VARCHAR[256] default NULL,");
   request.truncate(request.length() - 1);
   request.append(");");
   res = query.exec(request) && res;
 
   model_->setTable(tbl_name);
   qDebug() << "Table " << tbl_name << " created: " << res;
-
-//  query.exec("DELETE FROM " + tbl_name + ";");
 
   request = "INSERT INTO " + tbl_name + " (";
   for (QString label : labels) request.append(label + ", ");
@@ -97,26 +81,23 @@ bool SqlRelationalTableModel::CreateTable(const QString tbl_name,
     if (val.type() == QJsonValue::Object) {
       QJsonObject val_obj = val.toObject();
       QStringList keys = val_obj.keys();
-      query.bindValue(":Id", val["Id"].toInt());
+      query.bindValue(":Id", QString::number(val["Id"].toInt()));
       // clear all bindings
-      for (QString key : keys) {
+      for (QString key : labels) {
         if (key != "Id") query.bindValue(QString(":" + key), "");
       }
       // bind new values to object data
       for (QString key : keys) {
         if (key != "Id") query.bindValue(QString(":" + key), convert(key, val));
         if (convert(key, val) == "...") {
-          QMap<QString, int> ef{};
-          ef.insert(tbl_name + "_Id", val_obj["Id"].toInt());
+          QMap<QString, QString> ef{};
+          ef.insert(tbl_name + "_Id", QString::number(val_obj["Id"].toInt()));
           CreateTable(key, val_obj[key].toArray(), &ef, false);
-          //          qDebug() << "\n\nTHIS IS AN ARRAY\n"
-          //                   << key << "at " << GetColumnIndex(key) << "\n"
-          //                   << val_obj[key];
         }
       }
       // bind to extra fields
       if (extra_fields != nullptr) {
-        QMap<QString, int>::ConstIterator it = extra_fields->begin();
+        QMap<QString, QString>::ConstIterator it = extra_fields->begin();
         while (it != extra_fields->end()) {
           query.bindValue(QString(":" + it.key()), it.value());
           ++it;
@@ -126,19 +107,6 @@ bool SqlRelationalTableModel::CreateTable(const QString tbl_name,
       //
     }
   }
-
-  //  model_->setTable(tbl_name);
-  //  model_->select();
-  //  int rows = model_->rowCount();
-  //  int cols = model_->columnCount();
-  //  for (int row = 0; row < rows; ++row) {
-  //    for (int col = 0; col < cols; ++col) {
-  //      QMap<int, QVariant> qmap{};
-  //      qmap.insert(Qt::ToolTipRole,
-  //      model_->record(row).value(col).toString());
-  //      model_->setItemData(model_->index(row, col), qmap);
-  //    }
-  //  }
 
   if (show) {
     model_->setTable(tbl_name);
@@ -150,7 +118,6 @@ bool SqlRelationalTableModel::CreateTable(const QString tbl_name,
 }
 
 auto SqlRelationalTableModel::GetHistoryModifyLeadStatus() -> QSet<QString> {
-  qDebug() << "\n\nActions fired";
   QSet<QString> res{};
   QSqlQuery query;
   query.exec(
@@ -162,14 +129,32 @@ auto SqlRelationalTableModel::GetHistoryModifyLeadStatus() -> QSet<QString> {
     if (id.length() > 0) res.insert(id);
   }
   emit createTableFinished("StudentClientIdList");
+  model_->setTable("Leads");
+  model_->select();
   return res;
+}
+
+auto SqlRelationalTableModel::GetValuesFromTable(QString table, QString field,
+                                                 QSet<QString> &res) -> void {
+  QSqlQuery query;
+  query.exec("SELECT * FROM " + table + ";");
+  while (query.next()) {
+    QString id = query.value(field).toString();
+    if (id.length() > 0) res.insert(id);
+  }
+  emit createTableFinished("GetValuesFromTable_" + table + "_" + field);
+}
+
+void SqlRelationalTableModel::SelectTable(QString table) {
+  model_->setTable(table);
+  model_->select();
 }
 
 auto SqlRelationalTableModel::convert(QString key, const QJsonValue &obj)
     -> QString {
   QString value;
   if (obj[key].type() == QJsonValue::Double)
-    value = QString::number(obj[key].toDouble());
+    value = QString::number(obj[key].toInt());
   else if (obj[key].type() == QJsonValue::Array)
     value = "...";
   else if (obj[key].toString().length() == 0)
@@ -185,4 +170,13 @@ auto SqlRelationalTableModel::GetColumnIndex(QString const name) -> int {
     i++;
   }
   return i;
+}
+
+auto SqlRelationalTableModel::ClearDb() -> void {
+  QStringList tables = db_.tables();
+  QSqlQuery query;
+  for (QString table : tables) {
+    query.exec("DROP TABLE IF EXISTS " + table + ";");
+    query.exec();
+  }
 }

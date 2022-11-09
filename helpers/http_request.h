@@ -8,6 +8,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QUrlQuery>
+#include <QFuture>
 #include <iostream>
 
 #include "constants.h"
@@ -24,7 +25,7 @@ class HttpRequest : public QObject {
   void dataReady();
 
  public slots:
-  void DataReadyRead();
+//  void DataReadyRead();
   void DataReadFinished();
 
  private:

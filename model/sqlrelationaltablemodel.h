@@ -17,14 +17,19 @@
 class SqlRelationalTableModel : public QObject {
   Q_OBJECT
  public:
+  QSqlRelationalTableModel* model_;
   SqlRelationalTableModel(QObject* parent = nullptr);
   ~SqlRelationalTableModel();
-  QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const;
   auto CreateTable(const QString tbl_name, const QJsonArray& data,
-                   QMap<QString, int>* extra_fields = nullptr,
+                   QMap<QString, QString>* extra_fields = nullptr,
                    bool show = true) -> bool;
   auto GetHistoryModifyLeadStatus() -> QSet<QString>;
-  QSqlRelationalTableModel* model_;
+  auto GetValuesFromTable(QString table, QString field, QSet<QString>& res)
+      -> void;
+  auto SelectTable(QString table) -> void;
+  auto ClearDb() -> void;
+  auto GetColumnIndex(QString const name) -> int;
+
  signals:
   void createTableFinished(QString tbl_name);
 
@@ -33,7 +38,6 @@ class SqlRelationalTableModel : public QObject {
   bool state_;
   auto DefineLabels(const QJsonArray& data) -> QStringList;
   auto convert(QString key, const QJsonValue& val) -> QString;
-  auto GetColumnIndex(QString const name) -> int;
 };
 
 #endif  // SQLRELATIONALTABLEMODEL_H

@@ -16,6 +16,7 @@ SOURCES += \
     helpers/file_utility.cpp \
     helpers/http_request.cpp \
     main.cpp \
+    view/widgets/tablewidget.cpp
 
 HEADERS += \
     controller/controller.h \
@@ -25,13 +26,15 @@ HEADERS += \
     view/mainwindow.h \
     helpers/file_utility.h \
     helpers/http_request.h \
+    view/widgets/tablewidget.h
 
 
 
 
 FORMS += \
     view/mainwindow.ui \
-    view/widgets/leadswidget.ui
+    view/widgets/leadswidget.ui \
+    view/widgets/tablewidget.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
