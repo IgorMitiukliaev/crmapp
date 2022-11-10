@@ -6,7 +6,7 @@
 #include <QTextStream>
 #include <QUrlQuery>
 #include <iomanip>
-
+#include <QtConcurrent>
 #include "helpers/file_utility.h"
 #include "helpers/http_request.h"
 #include "model/sqlrelationaltablemodel.h"
@@ -23,13 +23,8 @@ class Controller : public QObject {
     return model_sqlr_->model_;
   };
   auto GetFullLeadsData(QUrlQuery params_) -> bool;
-//  auto GetHistoryModifyLeadStatus() -> bool;
   auto ClearDb() -> void;
-
- public slots:
-  auto ExportData() -> void;
-  auto DispatchData() -> void;
-  auto Dispatcher(QString) -> void;
+  static auto ExportData(QByteArray &&data) -> void;
 
  private:
   QString current_process_;
@@ -41,6 +36,6 @@ class Controller : public QObject {
   auto GetKey(QString path) -> QByteArray;
   void ExportDataToModel();
   auto ExportLeadsToModel() -> void;
+  static auto MakeHTTPRequest(QString, QUrlQuery) -> QByteArray;
 };
-
 #endif  // CONTROLLER_H

@@ -9,6 +9,8 @@
 #include <QNetworkRequest>
 #include <QUrlQuery>
 #include <QFuture>
+#include <QPromise>
+#include <QtConcurrent>
 #include <iostream>
 
 #include "constants.h"
@@ -18,14 +20,10 @@ class HttpRequest : public QObject {
  public:
   HttpRequest(QObject *parent = nullptr);
   ~HttpRequest();
-  auto MakeHTTPRequest(QString &, QUrlQuery &) -> void;
+  QByteArray MakeHTTPRequest(QString &, QUrlQuery &);
   auto ReadData() -> QByteArray *;
 
- signals:
-  void dataReady();
-
  public slots:
-//  void DataReadyRead();
   void DataReadFinished();
 
  private:

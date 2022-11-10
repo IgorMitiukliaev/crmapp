@@ -3,11 +3,7 @@
 Controller::Controller(QObject* parent)
     : QObject(parent),
       request_(new HttpRequest),
-      model_sqlr_(new SqlRelationalTableModel) {
-  connect(request_, &HttpRequest::dataReady, this, &Controller::DispatchData);
-  connect(model_sqlr_, &SqlRelationalTableModel::createTableFinished, this,
-          &Controller::Dispatcher);
-}
+      model_sqlr_(new SqlRelationalTableModel) {}
 
 Controller::~Controller() {
   delete request_;
@@ -26,72 +22,68 @@ auto Controller::GetDataFromApi(QString path, QUrlQuery params) -> void {
   request_->MakeHTTPRequest(path, params);
 };
 
+auto Controller::MakeHTTPRequest(QString path, QUrlQuery params)
+    -> QByteArray {
+  HttpRequest request;
+  return request.MakeHTTPRequest(path, params);
+}
+
 bool Controller::GetFullLeadsData(QUrlQuery params) {
-  current_process_ = "GetLeads";
-  current_params_ = params;
-  Dispatcher(current_process_);
+  QUrlQuery current_params = params;
+  QString path = "GetLeads";
+  current_params.addQueryItem("authkey", GetKey(path));
+  qDebug() << "GetLeads";
+
+  QFuture<void> future =
+      QtConcurrent::run(MakeHTTPRequest, path, current_params).then(ExportData);
+  //          .then([this]() {
+  //            qDebug() << "ExportData";
+  //            return ExportData();
+  //          })
+  //          .then([this]() {
+  //            qDebug() << "ExportDataToModel";
+  //            return ExportDataToModel();
+  //          })
+  //          .then([this]() {
+  //            qDebug() << "GetValuesFromTable";
+  //            return model_sqlr_->GetValuesFromTable("Leads", "Id", buffer_);
+  //          })
+  //          .then([this]() {
+  //            qDebug() << buffer_;
+  //            qDebug() << buffer_.size();
+  //            return true;
+  //          });
+  //  future.result();
+
+  //  path = "GetHistoryModifyLeadStatus";
+  //  current_params.clear();
+  //  current_params.addQueryItem("authkey", GetKey(path));
+
+  //  QSet<QString>::Iterator it = buffer_.begin();
+  //  while (it != buffer_.end()) {
+  //    if (it->length() > 0) {
+  //      current_params.addQueryItem("LeadId", *it);
+  //      request_->MakeHTTPRequest(path, current_params)
+  //          .then([this]() { ExportData(); })
+  //          .then([this]() { ExportDataToModel(); });
+  //    }
+  //    ++it;
+  //  }
+
+  //  path = "GetEdUnitLeads";
+  //  current_params.clear();
+  //  current_params.addQueryItem("authkey", GetKey(path));
+  //  it = buffer_.begin();
+  //  while (it != buffer_.end()) {
+  //    if (it->length() > 0) {
+  //      current_params.addQueryItem("LeadId", *it);
+  //      request_->MakeHTTPRequest(path, current_params)
+  //          .then([this]() { ExportData(); })
+  //          .then([this]() { ExportDataToModel(); });
+  //    }
+  //    ++it;
+  //  }
   return true;
-}
-
-auto Controller::Dispatcher(QString name) -> void {
-  if (current_process_ == "GetLeads") {
-    if (name == "GetLeads") {
-      QString path = "GetLeads";
-      current_params_.addQueryItem("authkey", GetKey(path));
-      request_->MakeHTTPRequest(path, current_params_);
-    } else if (name == "Leads") {
-      current_process_ = "GetHistoryModifyLeadStatus";
-      current_params_.clear();
-      current_params_.addQueryItem("authkey", GetKey(current_process_));
-      model_sqlr_->GetValuesFromTable("Leads", "Id", buffer_);
-    }
-  } else if (current_process_ == "GetHistoryModifyLeadStatus") {
-    if ((name == "Actions" || name == "GetValuesFromTable_Leads_Id")) {
-      qDebug() << buffer_;
-      qDebug() << buffer_.size();
-
-      QSet<QString> buffer_tmp = buffer_;
-      QSet<QString>::Iterator it = buffer_tmp.begin();
-      if (it->length() > 0) {
-        current_params_.addQueryItem("LeadId", *it);
-        buffer_tmp.erase(it);
-        qDebug() << "\nBUFFER = " << buffer_tmp;
-        buffer_ = buffer_tmp;
-        request_->MakeHTTPRequest(current_process_, current_params_);
-      } else if (it->length() == 0) {
-        current_process_ = "GetEdUnitLeads";
-        current_params_.clear();
-        model_sqlr_->GetValuesFromTable("Leads", "Id", buffer_);
-      }
-    }
-  } else if (current_process_ == "GetEdUnitLeads") {
-    if ((name == "EdUnitLeads" || name == "GetValuesFromTable_Leads_Id") &&
-        buffer_.size() > 0) {
-      current_params_.addQueryItem("authkey", GetKey(current_process_));
-      QSet<QString> buffer_tmp = buffer_;
-      QSet<QString>::Iterator it = buffer_tmp.begin();
-      if (it->length() > 0) {
-        current_params_.addQueryItem("LeadId", *it);
-        buffer_tmp.erase(it);
-        buffer_ = buffer_tmp;
-        qDebug() << "\nBUFFER = " << buffer_;
-        request_->MakeHTTPRequest(current_process_, current_params_);
-      } else if (it->length() == 0) {
-        model_sqlr_->SelectTable("Leads");
-        //      current_process_ = "";
-        //      current_params_.clear();
-      }
-    }
-  }
-}
-
-void Controller::DispatchData() {
-  ExportData();
-  if (current_process_ == "GetLeads") {
-    ExportLeadsToModel();
-  } else {
-    ExportDataToModel();
-  }
 }
 
 void Controller::ExportDataToModel() {
@@ -111,13 +103,14 @@ void Controller::ExportLeadsToModel() {
   model_sqlr_->SelectTable("Leads");
 }
 
-auto Controller::ExportData() -> void {
+auto Controller::ExportData(QByteArray&& data) -> void {
+  qDebug() << "ExportData_IN \n" << data;
   QString path = "./out.json";
   QFile file(path);
   if (file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
     QTextStream iStream(&file);
     iStream.setEncoding(QStringConverter::Utf8);
-    iStream << *(request_->ReadData());
+    iStream << data;
     file.close();
   } else {
     std::cout << "file open failed: " << path.toStdString() << std::endl;

@@ -95,6 +95,22 @@ void LeadsWidget::SetParams() {
                          createdFrom.toString(Qt::ISODateWithMs));
     params_.addQueryItem("createdTo", createdTo.toString(Qt::ISODateWithMs));
   }
+
+//  if (ui->chb_hist->isChecked()) {
+//    if (ui->chb_a->isChecked() && ui->chb_b->isChecked()) {
+//      dateTimeFrom = std::min(addressDateFrom, createdFrom);
+//    } else if (ui->chb_a->isChecked()) {
+//      dateTimeFrom = addressDateFrom;
+//    } else if (ui->chb_b->isChecked()) {
+//      dateTimeFrom = createdFrom;
+//    }
+
+//    if (ui->chb_hist->isChecked() &&
+//        (ui->chb_a->isChecked() || ui->chb_b->isChecked())) {
+//      params_.addQueryItem("dateTimeFrom",
+//                           dateTimeFrom.toString(Qt::ISODateWithMs));
+//    }
+//  }
 }
 
 //

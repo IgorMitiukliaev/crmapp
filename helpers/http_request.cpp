@@ -5,13 +5,13 @@ HttpRequest::HttpRequest(QObject *parent)
       manager_(new QNetworkAccessManager(this)),
       reply_(nullptr),
       data_buffer_(new QByteArray) {
-//  connect(manager_, &QNetworkAccessManager::finished, this,
-//          &HttpRequest::DataReadFinished);
+  //  connect(manager_, &QNetworkAccessManager::finished, this,
+  //          &HttpRequest::DataReadFinished);
 }
 
 HttpRequest::~HttpRequest() {}
 
-auto HttpRequest::MakeHTTPRequest(QString &req_type, QUrlQuery &param) -> void {
+QByteArray HttpRequest::MakeHTTPRequest(QString &req_type, QUrlQuery &param) {
   QUrl url;
   data_buffer_->clear();
   url.setScheme("https");
@@ -21,15 +21,20 @@ auto HttpRequest::MakeHTTPRequest(QString &req_type, QUrlQuery &param) -> void {
   qDebug() << "\n\nParams = " << param.toString();
   QNetworkRequest request;
   request.setUrl(url);
-  reply_ = manager_->get(request);
-  auto future = QtFuture::connect(reply_, &QNetworkReply::finished);
-  future.then([this]() { return DataReadFinished(); });
-}
+  qDebug() << "manager";
+  QNetworkAccessManager manager;
+  QNetworkReply *reply = manager.get(request);
+  auto future = QtFuture::connect(reply, &QNetworkReply::finished);
+  qDebug() << "future "
+           << future
+                  .then(QtFuture::Launch::Async,
+                        [&reply] { return reply->readAll(); })
+                  .result();
 
-//void HttpRequest::DataReadyRead() {
-//  data_buffer_->clear();
-//  data_buffer_->append(reply_->readAll());
-//}
+  return future
+      .then(QtFuture::Launch::Async, [&reply] { return reply->readAll(); })
+      .result();
+}
 
 auto HttpRequest::ReadData() -> QByteArray * { return data_buffer_; }
 
@@ -39,6 +44,5 @@ void HttpRequest::DataReadFinished() {
   } else {
     data_buffer_->append(reply_->readAll());
     std::cout << data_buffer_->toStdString() << std::endl;
-    emit dataReady();
   }
 }
