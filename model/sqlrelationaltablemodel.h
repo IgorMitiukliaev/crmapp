@@ -24,8 +24,7 @@ class SqlRelationalTableModel : public QObject {
                    QMap<QString, QString>* extra_fields = nullptr,
                    bool show = true) -> bool;
   auto GetHistoryModifyLeadStatus() -> QSet<QString>;
-  auto GetValuesFromTable(QString table, QString field, QSet<QString>& res)
-      -> void;
+  auto GetValuesFromTable(QString table, QString field) -> QSet<QString>;
   auto SelectTable(QString table) -> void;
   auto ClearDb() -> void;
   auto GetColumnIndex(QString const name) -> int;

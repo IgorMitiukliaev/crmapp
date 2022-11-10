@@ -5,8 +5,8 @@ Controller::Controller(QObject* parent)
       request_(new HttpRequest),
       model_sqlr_(new SqlRelationalTableModel) {
   connect(request_, &HttpRequest::dataReady, this, &Controller::DispatchData);
-  connect(model_sqlr_, &SqlRelationalTableModel::createTableFinished, this,
-          &Controller::Dispatcher);
+//  connect(model_sqlr_, &SqlRelationalTableModel::createTableFinished, this,
+//          &Controller::Dispatcher);
 }
 
 Controller::~Controller() {
@@ -43,25 +43,31 @@ auto Controller::Dispatcher(QString name) -> void {
       current_process_ = "GetHistoryModifyLeadStatus";
       current_params_.clear();
       current_params_.addQueryItem("authkey", GetKey(current_process_));
-      model_sqlr_->GetValuesFromTable("Leads", "Id", buffer_);
+      buffer_ = model_sqlr_->GetValuesFromTable("Leads", "Id");
+      if (!buffer_.isEmpty()) {
+        qDebug() << buffer_;
+        qDebug() << buffer_.size();
+        QSet<QString>::Iterator it = buffer_.begin();
+        if (it->length() > 0) {
+          current_params_.addQueryItem("LeadId", *it);
+          buffer_.erase(it);
+          qDebug() << "\nBUFFER = " << buffer_;
+          request_->MakeHTTPRequest(current_process_, current_params_);
+        }
+      }
     }
   } else if (current_process_ == "GetHistoryModifyLeadStatus") {
-    if ((name == "Actions" || name == "GetValuesFromTable_Leads_Id")) {
-      qDebug() << buffer_;
-      qDebug() << buffer_.size();
-
-      QSet<QString> buffer_tmp = buffer_;
-      QSet<QString>::Iterator it = buffer_tmp.begin();
+    if (name == "Actions") {
+      QSet<QString>::Iterator it = buffer_.begin();
       if (it->length() > 0) {
         current_params_.addQueryItem("LeadId", *it);
-        buffer_tmp.erase(it);
-        qDebug() << "\nBUFFER = " << buffer_tmp;
-        buffer_ = buffer_tmp;
+        buffer_.erase(it);
+        qDebug() << "\nBUFFER = " << buffer_;
         request_->MakeHTTPRequest(current_process_, current_params_);
       } else if (it->length() == 0) {
         current_process_ = "GetEdUnitLeads";
         current_params_.clear();
-        model_sqlr_->GetValuesFromTable("Leads", "Id", buffer_);
+        buffer_ = model_sqlr_->GetValuesFromTable("Leads", "Id");
       }
     }
   } else if (current_process_ == "GetEdUnitLeads") {

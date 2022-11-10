@@ -134,15 +134,17 @@ auto SqlRelationalTableModel::GetHistoryModifyLeadStatus() -> QSet<QString> {
   return res;
 }
 
-auto SqlRelationalTableModel::GetValuesFromTable(QString table, QString field,
-                                                 QSet<QString> &res) -> void {
+auto SqlRelationalTableModel::GetValuesFromTable(QString table, QString field)
+    -> QSet<QString> {
+  QSet<QString> res;
   QSqlQuery query;
   query.exec("SELECT * FROM " + table + ";");
   while (query.next()) {
     QString id = query.value(field).toString();
     if (id.length() > 0) res.insert(id);
   }
-  emit createTableFinished("GetValuesFromTable_" + table + "_" + field);
+  //  emit createTableFinished("GetValuesFromTable_" + table + "_" + field);
+  return res;
 }
 
 void SqlRelationalTableModel::SelectTable(QString table) {

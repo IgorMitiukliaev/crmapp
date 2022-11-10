@@ -8,9 +8,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QUrlQuery>
-#include <QFuture>
 #include <iostream>
-
 #include "constants.h"
 
 class HttpRequest : public QObject {
