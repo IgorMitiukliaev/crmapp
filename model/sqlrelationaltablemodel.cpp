@@ -55,12 +55,9 @@ bool SqlRelationalTableModel::CreateTable(const QString tbl_name,
     }
   }
 
-  QString request = "create table if not exists " + tbl_name +
-                    " ("
-                    "Id VARCHAR[256],";
-
+  QString request = "create table if not exists " + tbl_name + " (";
   for (QString label : labels)
-    if (label != "Id") request.append(label + " VARCHAR[256] default NULL,");
+    request.append(label + " VARCHAR[256] default NULL,");
   request.truncate(request.length() - 1);
   request.append(");");
   res = query.exec(request) && res;
@@ -81,10 +78,18 @@ bool SqlRelationalTableModel::CreateTable(const QString tbl_name,
     if (val.type() == QJsonValue::Object) {
       QJsonObject val_obj = val.toObject();
       QStringList keys = val_obj.keys();
-      query.bindValue(":Id", QString::number(val["Id"].toInt()));
+      //      query.bindValue(":Id", QString::number(val["Id"].toInt()));
       // clear all bindings
       for (QString key : labels) {
-        if (key != "Id") query.bindValue(QString(":" + key), "");
+        if (key != "Id") {
+          query.bindValue(QString(":" + key), "");
+        } else {
+          query.bindValue(":Id", QString::number(val["Id"].toInt()));
+          // add new ids to table_id_set
+          if (!table_id_set.contains(tbl_name))
+            table_id_set.insert(tbl_name, QSet<QString>{});
+          table_id_set[tbl_name].insert(QString::number(val["Id"].toInt()));
+        }
       }
       // bind new values to object data
       for (QString key : keys) {
@@ -117,23 +122,6 @@ bool SqlRelationalTableModel::CreateTable(const QString tbl_name,
   return res;
 }
 
-auto SqlRelationalTableModel::GetHistoryModifyLeadStatus() -> QSet<QString> {
-  QSet<QString> res{};
-  QSqlQuery query;
-  query.exec(
-      "SELECT *"
-      "FROM Leads"
-      ";");
-  while (query.next()) {
-    QString id = query.value("StudentClientId").toString();
-    if (id.length() > 0) res.insert(id);
-  }
-  emit createTableFinished("StudentClientIdList");
-  model_->setTable("Leads");
-  model_->select();
-  return res;
-}
-
 auto SqlRelationalTableModel::GetValuesFromTable(QString table, QString field)
     -> QSet<QString> {
   QSet<QString> res;
@@ -143,7 +131,6 @@ auto SqlRelationalTableModel::GetValuesFromTable(QString table, QString field)
     QString id = query.value(field).toString();
     if (id.length() > 0) res.insert(id);
   }
-  //  emit createTableFinished("GetValuesFromTable_" + table + "_" + field);
   return res;
 }
 
@@ -157,7 +144,8 @@ auto SqlRelationalTableModel::convert(QString key, const QJsonValue &obj)
   QString value;
   if (obj[key].type() == QJsonValue::Double)
     value = QString::number(obj[key].toInt());
-  else if (obj[key].type() == QJsonValue::Array)
+  else if (obj[key].type() == QJsonValue::Array &&
+           obj[key].toArray().size() > 0)
     value = "...";
   else if (obj[key].toString().length() == 0)
     value = "";
@@ -174,10 +162,15 @@ auto SqlRelationalTableModel::GetColumnIndex(QString const name) -> int {
   return i;
 }
 
+auto SqlRelationalTableModel::GetIDSet(QString tbl_name) -> QSet<QString> {
+  return table_id_set[tbl_name];
+}
+
 auto SqlRelationalTableModel::ClearDb() -> void {
   QStringList tables = db_.tables();
   QSqlQuery query;
   for (QString table : tables) {
+    table_id_set[table].clear();
     query.exec("DROP TABLE IF EXISTS " + table + ";");
     query.exec();
   }

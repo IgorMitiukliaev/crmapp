@@ -33,5 +33,6 @@ void HttpRequest::DataReadFinished() {
     data_buffer_->append(reply_->readAll());
     std::cout << data_buffer_->toStdString() << std::endl;
     emit dataReady();
+    emit next();
   }
 }

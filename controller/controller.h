@@ -5,6 +5,7 @@
 #include <QObject>
 #include <QTextStream>
 #include <QUrlQuery>
+#include <QtConcurrent>
 #include <iomanip>
 
 #include "helpers/file_utility.h"
@@ -13,6 +14,7 @@
 
 class Controller : public QObject {
   Q_OBJECT
+
  public:
   Controller(QObject* parent = nullptr);
   ~Controller();
@@ -23,19 +25,25 @@ class Controller : public QObject {
     return model_sqlr_->model_;
   };
   auto GetFullLeadsData(QUrlQuery params_) -> bool;
-//  auto GetHistoryModifyLeadStatus() -> bool;
+  //  auto GetHistoryModifyLeadStatus() -> bool;
   auto ClearDb() -> void;
+ signals:
+  void next();
 
  public slots:
   auto ExportData() -> void;
   auto DispatchData() -> void;
   auto Dispatcher(QString) -> void;
+//  auto RunRoutine(int) -> void;
+  auto RunRoutine() -> void;
 
  private:
   QString current_process_;
   QUrlQuery current_params_;
-  QSet<QString> buffer_;
+  //  QSet<QString> buffer_;
+  QMap<int, std::function<void()>> routine_;
   std::map<std::string, std::string> keys_;
+  QSet<QString> id_set;
   HttpRequest* request_;
   SqlRelationalTableModel* model_sqlr_;
   auto GetKey(QString path) -> QByteArray;

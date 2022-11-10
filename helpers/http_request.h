@@ -9,6 +9,7 @@
 #include <QNetworkRequest>
 #include <QUrlQuery>
 #include <iostream>
+
 #include "constants.h"
 
 class HttpRequest : public QObject {
@@ -21,9 +22,10 @@ class HttpRequest : public QObject {
 
  signals:
   void dataReady();
+  void next();
 
  public slots:
-//  void DataReadyRead();
+  //  void DataReadyRead();
   void DataReadFinished();
 
  private:

@@ -23,18 +23,20 @@ class SqlRelationalTableModel : public QObject {
   auto CreateTable(const QString tbl_name, const QJsonArray& data,
                    QMap<QString, QString>* extra_fields = nullptr,
                    bool show = true) -> bool;
-  auto GetHistoryModifyLeadStatus() -> QSet<QString>;
   auto GetValuesFromTable(QString table, QString field) -> QSet<QString>;
   auto SelectTable(QString table) -> void;
   auto ClearDb() -> void;
   auto GetColumnIndex(QString const name) -> int;
+  auto GetIDSet(QString) -> QSet<QString>;
 
  signals:
   void createTableFinished(QString tbl_name);
+  void next();
 
  private:
   QSqlDatabase db_;
   bool state_;
+  QMap<QString, QSet<QString>> table_id_set;
   auto DefineLabels(const QJsonArray& data) -> QStringList;
   auto convert(QString key, const QJsonValue& val) -> QString;
 };

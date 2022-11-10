@@ -53,7 +53,7 @@ void LeadsWidget::SetParams() {
   QDate addressDateTo;
   QDate createdFrom;
   QDate createdTo;
-//  QDate dateTimeFrom;
+  //  QDate dateTimeFrom;
 
   params_.clear();
   QString value = ui->id->text();
@@ -106,7 +106,9 @@ ArrayTableView::ArrayTableView(QObject *parent) : QStyledItemDelegate(parent) {}
 ArrayTableView::ArrayTableView(QObject *parent, QSqlRelationalTableModel *model)
     : QStyledItemDelegate(parent), model_(model) {}
 
-ArrayTableView::~ArrayTableView() { delete model_; }
+ArrayTableView::~ArrayTableView() {
+  //  delete model_;
+}
 
 bool ArrayTableView::editorEvent(QEvent *e, QAbstractItemModel *model,
                                  const QStyleOptionViewItem &option,
