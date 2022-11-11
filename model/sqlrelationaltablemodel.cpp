@@ -100,7 +100,7 @@ bool SqlRelationalTableModel::CreateTable(const QString tbl_name,
       }
       // bind to extra fields
       if (extra_fields != nullptr) {
-        QSqlQuery query;
+//        QSqlQuery query;
         QMap<QString, QString>::ConstIterator it = extra_fields->begin();
         while (it != extra_fields->end()) {
           query.bindValue(QString(":" + it.key()), it.value());
@@ -117,7 +117,7 @@ bool SqlRelationalTableModel::CreateTable(const QString tbl_name,
     model_->select();
   }
   qDebug() << "Tables available " << db_.tables();
-  emit createTableFinished(tbl_name);
+//  emit createTableFinished(tbl_name);
   return res;
 }
 
@@ -167,17 +167,19 @@ auto SqlRelationalTableModel::GetIDSet(QString tbl_name) -> QSet<QString> {
 
 QMap<QString, QString> SqlRelationalTableModel::GetLeadsStats() {
   QMap<QString, QString> res{};
-  QSqlQuery query;
-  query.exec("SELECT COUNT(DISTINCT Id) FROM Leads");
-  query.next();
-  res.insert("Leads", query.value(0).toString());
+    QSqlQuery query;
+    query.exec("SELECT COUNT(DISTINCT Id) FROM Leads;");
+    query.first();
+    res.insert("Leads", query.value(0).toString());
+    qDebug() << res;
 
-  query.exec(
-      "SELECT COUNT(DISTINCT Id) FROM Leads INNER JOIN EdUnitLeads"
-      "ON Leads.Id = EdUnitLeads.LeadId");
-  query.next();
-  res.insert("EdUnitLeads", query.value(0).toString());
-  qDebug()<<res;
+  QSqlQuery query2;
+  query2.exec(
+      "SELECT COUNT(DISTINCT Id) FROM Leads INNER JOIN EdUnitLeads ON Leads.Id "
+      "= EdUnitLeads.LeadId;");
+  query2.first();
+  res.insert("EdUnitLeads", query2.value(0).toString());
+  qDebug() << res;
   return res;
 }
 

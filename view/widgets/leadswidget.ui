@@ -41,85 +41,6 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="0" colspan="2">
-      <widget class="QLabel" name="label_3">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>320</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Прикреплён к ученику:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0" colspan="2">
-      <widget class="QLineEdit" name="id">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>320</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="maxLength">
-        <number>20</number>
-       </property>
-       <property name="clearButtonEnabled">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="0" colspan="2">
-      <widget class="QLabel" name="label">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>320</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Id лида</string>
-       </property>
-      </widget>
-     </item>
-     <item row="9" column="0">
-      <widget class="QLabel" name="label_7">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>320</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Добавлен:</string>
-       </property>
-      </widget>
-     </item>
      <item row="10" column="0" colspan="2">
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
@@ -184,7 +105,26 @@
        </item>
       </layout>
      </item>
-     <item row="15" column="0" colspan="2">
+     <item row="7" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>320</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Дата обращения: </string>
+       </property>
+      </widget>
+     </item>
+     <item row="16" column="0" colspan="2">
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
         <widget class="QPushButton" name="btn_OK">
@@ -245,24 +185,62 @@
        </item>
       </layout>
      </item>
-     <item row="0" column="2" rowspan="16">
-      <widget class="QTableView" name="tableView">
+     <item row="14" column="1">
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="12" column="0" rowspan="2" colspan="2">
+      <widget class="QLabel" name="lbl_info">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
        <property name="minimumSize">
         <size>
-         <width>500</width>
+         <width>320</width>
          <height>300</height>
         </size>
        </property>
+       <property name="text">
+        <string/>
+       </property>
       </widget>
      </item>
-     <item row="7" column="0">
-      <widget class="QLabel" name="label_4">
+     <item row="1" column="0" colspan="2">
+      <widget class="QLineEdit" name="id">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>320</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="maxLength">
+        <number>20</number>
+       </property>
+       <property name="clearButtonEnabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0">
+      <widget class="QLabel" name="label_7">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
          <horstretch>0</horstretch>
@@ -276,7 +254,26 @@
         </size>
        </property>
        <property name="text">
-        <string>Дата обращения: </string>
+        <string>Добавлен:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0" colspan="2">
+      <widget class="QLabel" name="label_3">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>320</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Прикреплён к ученику:</string>
        </property>
       </widget>
      </item>
@@ -309,8 +306,8 @@
        </item>
       </layout>
      </item>
-     <item row="6" column="0" colspan="2">
-      <widget class="QComboBox" name="attached">
+     <item row="0" column="0" colspan="2">
+      <widget class="QLabel" name="label">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -323,35 +320,26 @@
          <height>16777215</height>
         </size>
        </property>
-       <item>
-        <property name="text">
-         <string>неважно</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>да</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>нет</string>
-        </property>
-       </item>
+       <property name="text">
+        <string>Id лида</string>
+       </property>
       </widget>
      </item>
-     <item row="14" column="1">
-      <spacer name="verticalSpacer">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
+     <item row="0" column="2" rowspan="17">
+      <widget class="QTableView" name="tableView">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
        </property>
-       <property name="sizeHint" stdset="0">
+       <property name="minimumSize">
         <size>
-         <width>20</width>
-         <height>40</height>
+         <width>500</width>
+         <height>300</height>
         </size>
        </property>
-      </spacer>
+      </widget>
      </item>
      <item row="8" column="0" colspan="2">
       <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -439,22 +427,41 @@
        </property>
       </widget>
      </item>
-     <item row="12" column="0" rowspan="2" colspan="2">
-      <widget class="QLabel" name="lbl_info">
+     <item row="6" column="0" colspan="2">
+      <widget class="QComboBox" name="attached">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <property name="minimumSize">
+       <property name="maximumSize">
         <size>
          <width>320</width>
-         <height>300</height>
+         <height>16777215</height>
         </size>
        </property>
+       <item>
+        <property name="text">
+         <string>неважно</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>да</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>нет</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="15" column="0" colspan="2">
+      <widget class="QPushButton" name="pushButton">
        <property name="text">
-        <string/>
+        <string>Получить статистику</string>
        </property>
       </widget>
      </item>

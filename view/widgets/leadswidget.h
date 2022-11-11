@@ -29,15 +29,19 @@ class LeadsWidget : public QDialog {
   void on_chb_a_toggled(bool checked);
   void on_chb_b_toggled(bool checked);
   void on_btn_OK_clicked();
+  void keyPressEvent(QKeyEvent *event);
+  void GetLeadsStats();
 
- private:
+  void on_pushButton_clicked();
+
+private:
   Ui::LeadsWidget *ui;
   Controller *controller_;
   QSqlRelationalTableModel *model_;
   QUrlQuery params_;
   ArrayTableView *delegate_;
   void SetParams();
-  void keyPressEvent(QKeyEvent *event);
+
 };
 
 class ArrayTableView : public QStyledItemDelegate {

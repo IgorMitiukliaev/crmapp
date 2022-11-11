@@ -17,7 +17,6 @@ LeadsWidget::LeadsWidget(Controller *controller, QWidget *parent)
   ui->tableView->setItemDelegate(delegate_);
   ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
   ui->tableView->setSortingEnabled(true);
-//  ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
   ui->tableView->horizontalHeader()->setSectionsMovable(true);
 
   QDate date = QDate::currentDate();
@@ -26,7 +25,6 @@ LeadsWidget::LeadsWidget(Controller *controller, QWidget *parent)
   ui->createdTo->setDate(date);
   ui->createdFrom->setDate(date);
 }
-
 
 void LeadsWidget::keyPressEvent(QKeyEvent *event) {
   if (event->matches(QKeySequence::Copy)) {
@@ -46,6 +44,16 @@ void LeadsWidget::keyPressEvent(QKeyEvent *event) {
     clipboard->setText(text, QClipboard::Clipboard);
   }
 }
+
+void LeadsWidget::on_pushButton_clicked() { GetLeadsStats(); }
+
+void LeadsWidget::GetLeadsStats() {
+  QMap<QString, QString> stats = controller_->GetLeadsStats();
+  QString text;
+  text = "Всего лидов: " + stats["Leads"] + "\n";
+  text += "Лидов с пробными уроками: " + stats["EdUnitLeads"] + "\n";
+  ui->lbl_info->setText(text);
+};
 
 LeadsWidget::~LeadsWidget() {
   delete ui;

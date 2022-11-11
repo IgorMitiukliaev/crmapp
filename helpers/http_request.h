@@ -22,7 +22,6 @@ class HttpRequest : public QObject {
 
  signals:
   void dataReady();
-  void next();
 
  public slots:
   //  void DataReadyRead();

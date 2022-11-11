@@ -5,7 +5,7 @@ Controller::Controller(QObject* parent)
       request_(new HttpRequest),
       model_sqlr_(new SqlRelationalTableModel) {
   connect(request_, &HttpRequest::dataReady, this, &Controller::DispatchData);
-//  connect(request_, &HttpRequest::next, this, &Controller::RunRoutine);
+  //  connect(request_, &HttpRequest::next, this, &Controller::RunRoutine);
   connect(model_sqlr_, &SqlRelationalTableModel::next, this,
           &Controller::RunRoutine);
   connect(this, &Controller::next, this, &Controller::RunRoutine);
@@ -126,3 +126,4 @@ auto Controller::GetJsonData(QString& table_name, QJsonArray& data) -> void {
 }
 
 void Controller::ClearDb() { model_sqlr_->ClearDb(); }
+

@@ -21,12 +21,14 @@ class Controller : public QObject {
   auto Init() -> void;
   auto GetDataFromApi(QString path, QUrlQuery params) -> void;
   auto GetJsonData(QString&, QJsonArray&) -> void;
+  auto GetFullLeadsData(QUrlQuery params_) -> bool;
+  auto ClearDb() -> void;
   inline auto ShareModel() -> QSqlRelationalTableModel* {
     return model_sqlr_->model_;
   };
-  auto GetFullLeadsData(QUrlQuery params_) -> bool;
-  //  auto GetHistoryModifyLeadStatus() -> bool;
-  auto ClearDb() -> void;
+  inline auto GetLeadsStats() -> QMap<QString, QString> {
+    return model_sqlr_->GetLeadsStats();
+  };
 
  signals:
   void next();
