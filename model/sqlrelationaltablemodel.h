@@ -28,6 +28,7 @@ class SqlRelationalTableModel : public QObject {
   auto ClearDb() -> void;
   auto GetColumnIndex(QString const name) -> int;
   auto GetIDSet(QString) -> QSet<QString>;
+  auto GetLeadsStats() -> QMap<QString, QString>;
 
  signals:
   void createTableFinished(QString tbl_name);

@@ -5,13 +5,10 @@ Controller::Controller(QObject* parent)
       request_(new HttpRequest),
       model_sqlr_(new SqlRelationalTableModel) {
   connect(request_, &HttpRequest::dataReady, this, &Controller::DispatchData);
-  connect(request_, &HttpRequest::next, this, &Controller::RunRoutine);
+//  connect(request_, &HttpRequest::next, this, &Controller::RunRoutine);
   connect(model_sqlr_, &SqlRelationalTableModel::next, this,
           &Controller::RunRoutine);
   connect(this, &Controller::next, this, &Controller::RunRoutine);
-
-  //  connect(model_sqlr_, &SqlRelationalTableModel::createTableFinished, this,
-  //          &Controller::Dispatcher);
 }
 
 Controller::~Controller() {
@@ -51,6 +48,14 @@ bool Controller::GetFullLeadsData(QUrlQuery params) {
     int max_ind = *std::max_element(list_id.begin(), list_id.end());
     for (const QString& id : id_set) {
       std::function<void()> ff = [=]() {
+        QString name = "GetEdUnitLeads";
+        QUrlQuery params;
+        params.addQueryItem("authkey", GetKey(name));
+        params.addQueryItem("LeadId", id);
+        request_->MakeHTTPRequest(name, params);
+      };
+      routine_[max_ind + i++] = ff;
+      ff = [=]() {
         QString name = "GetHistoryModifyLeadStatus";
         QUrlQuery params;
         params.addQueryItem("authkey", GetKey(name));
@@ -67,93 +72,11 @@ bool Controller::GetFullLeadsData(QUrlQuery params) {
   return true;
 }
 
-auto Controller::Dispatcher(QString name) -> void {
-  if (name == "GetLeads") {
-    current_process_ = name;
-
-    std::function<void()> f = [&, this]() {
-      qDebug() << "3rd";
-      QString process = "GetHistoryModifyLeadStatus";
-      current_params_.clear();
-      current_params_.addQueryItem("authkey", GetKey(process));
-      for (auto lead_id : id_set) {
-        if (lead_id.length() > 0) {
-          current_params_.removeQueryItem("LeadId");
-          current_params_.addQueryItem("LeadId", lead_id);
-          request_->MakeHTTPRequest(process, current_params_);
-        }
-      };
-    };
-
-    f = [this]() {
-      qDebug() << "4th";
-      model_sqlr_->SelectTable("Leads");
-    };
-  }
-
-  /*
-  if (current_process_ == "GetLeads") {
-    if (name == "GetLeads") {
-      QString path = "GetLeads";
-      current_params_.addQueryItem("authkey", GetKey(path));
-      request_->MakeHTTPRequest(path, current_params_);
-    } else if (name == "Leads") {
-      current_process_ = "GetHistoryModifyLeadStatus";
-      current_params_.clear();
-      current_params_.addQueryItem("authkey", GetKey(current_process_));
-      buffer_ = model_sqlr_->GetValuesFromTable("Leads", "Id");
-      if (!buffer_.isEmpty()) {
-        qDebug() << buffer_;
-        qDebug() << buffer_.size();
-        QSet<QString>::Iterator it = buffer_.begin();
-        if (it->length() > 0) {
-          current_params_.addQueryItem("LeadId", *it);
-          buffer_.erase(it);
-          qDebug() << "\nBUFFER = " << buffer_;
-          request_->MakeHTTPRequest(current_process_, current_params_);
-        }
-      }
-    }
-  } else if (current_process_ == "GetHistoryModifyLeadStatus") {
-    if (name == "Actions") {
-      QSet<QString>::Iterator it = buffer_.begin();
-      if (it->length() > 0) {
-        current_params_.addQueryItem("LeadId", *it);
-        buffer_.erase(it);
-        qDebug() << "\nBUFFER = " << buffer_;
-        request_->MakeHTTPRequest(current_process_, current_params_);
-      } else if (it->length() == 0) {
-        current_process_ = "GetEdUnitLeads";
-        current_params_.clear();
-        buffer_ = model_sqlr_->GetValuesFromTable("Leads", "Id");
-      }removeFirst
-    }
-  } else if (current_process_ == "GetEdUnitLeads") {
-    if ((name == "EdUnitLeads" || name == "GetValuesFromTable_Leads_Id") &&
-        buffer_.size() > 0) {
-      current_params_.addQueryItem("authkey",
-  run_routineGetKey(current_process_)); QSet<QString> buffer_tmp = buffer_;
-      QSet<QString>::Iterator it = buffer_tmp.begin();
-      if (it->length() > 0) {
-        current_params_.addQueryItem("LeadId", *it);
-        buffer_tmp.erase(it);
-        buffer_ = buffer_tmp;
-        qDebug() << "\nBUFFER = " << buffer_;
-        request_->MakeHTTPRequest(current_process_, current_params_);
-      } else if (it->length() == 0) {
-        model_sqlr_->SelectTable("Leads");
-        //      current_process_ = "";
-        //      current_params_.clear();
-      }
-    }
-  }
-  */
-}
-
 void Controller::DispatchData() {
   ExportData();
   ExportDataToModel();
   model_sqlr_->SelectTable("Leads");
+  emit next();
 }
 
 void Controller::ExportDataToModel() {
@@ -162,23 +85,6 @@ void Controller::ExportDataToModel() {
   GetJsonData(tbl_name, data);
   model_sqlr_->CreateTable(tbl_name, data, nullptr, false);
 }
-
-void Controller::ExportLeadsToModel() {
-  QJsonArray data{};
-  QString tbl_name;
-  QMap<QString, QString> extra_fields;
-  extra_fields.insert("Actions", "...");
-  GetJsonData(tbl_name, data);
-  model_sqlr_->CreateTable(tbl_name, data, &extra_fields, false);
-}
-
-// void Controller::RunRoutine(int num) {
-//   if (routine_.keys().contains(num) > 0) {
-//     auto f = routine_[num];
-//     f();
-//     routine_.erase(routine_.find(num));
-//   }
-// }
 
 void Controller::RunRoutine() {
   QList<int> list_id = routine_.keys();

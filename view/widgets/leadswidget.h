@@ -7,6 +7,7 @@
 #include <QLineEdit>
 #include <QMenu>
 #include <QString>
+#include <QClipboard>
 
 #include "controller/controller.h"
 #include "tablewidget.h"
@@ -36,6 +37,7 @@ class LeadsWidget : public QDialog {
   QUrlQuery params_;
   ArrayTableView *delegate_;
   void SetParams();
+  void keyPressEvent(QKeyEvent *event);
 };
 
 class ArrayTableView : public QStyledItemDelegate {

@@ -16,12 +16,35 @@ LeadsWidget::LeadsWidget(Controller *controller, QWidget *parent)
   delegate_ = new ArrayTableView(this, model_);
   ui->tableView->setItemDelegate(delegate_);
   ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+  ui->tableView->setSortingEnabled(true);
+//  ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+  ui->tableView->horizontalHeader()->setSectionsMovable(true);
 
   QDate date = QDate::currentDate();
   ui->addressDateFrom->setDate(date);
   ui->addressDateTo->setDate(date);
   ui->createdTo->setDate(date);
   ui->createdFrom->setDate(date);
+}
+
+
+void LeadsWidget::keyPressEvent(QKeyEvent *event) {
+  if (event->matches(QKeySequence::Copy)) {
+    QString text;
+    QItemSelectionRange range =
+        ui->tableView->selectionModel()->selection().first();
+    for (auto i = range.top(); i <= range.bottom(); ++i) {
+      QStringList rowContents;
+      for (auto j = range.left(); j <= range.right(); ++j) {
+        QString buffer = model_->index(i, j).data().toString();
+        rowContents += buffer.length() > 0 ? buffer : " ";
+      }
+      text += rowContents.join("\t");
+      text += "\n";
+    }
+    QClipboard *clipboard = QApplication::clipboard();
+    clipboard->setText(text, QClipboard::Clipboard);
+  }
 }
 
 LeadsWidget::~LeadsWidget() {

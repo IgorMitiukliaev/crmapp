@@ -11,8 +11,6 @@ SqlRelationalTableModel::SqlRelationalTableModel(QObject *parent)
   qDebug() << db_.open();
   model_ = new QSqlRelationalTableModel(nullptr, db_);
   model_->setEditStrategy(QSqlTableModel::OnManualSubmit);
-
-  QSqlQuery query;
 }
 
 SqlRelationalTableModel::~SqlRelationalTableModel() {
@@ -102,6 +100,7 @@ bool SqlRelationalTableModel::CreateTable(const QString tbl_name,
       }
       // bind to extra fields
       if (extra_fields != nullptr) {
+        QSqlQuery query;
         QMap<QString, QString>::ConstIterator it = extra_fields->begin();
         while (it != extra_fields->end()) {
           query.bindValue(QString(":" + it.key()), it.value());
@@ -164,6 +163,22 @@ auto SqlRelationalTableModel::GetColumnIndex(QString const name) -> int {
 
 auto SqlRelationalTableModel::GetIDSet(QString tbl_name) -> QSet<QString> {
   return table_id_set[tbl_name];
+}
+
+QMap<QString, QString> SqlRelationalTableModel::GetLeadsStats() {
+  QMap<QString, QString> res{};
+  QSqlQuery query;
+  query.exec("SELECT COUNT(DISTINCT Id) FROM Leads");
+  query.next();
+  res.insert("Leads", query.value(0).toString());
+
+  query.exec(
+      "SELECT COUNT(DISTINCT Id) FROM Leads INNER JOIN EdUnitLeads"
+      "ON Leads.Id = EdUnitLeads.LeadId");
+  query.next();
+  res.insert("EdUnitLeads", query.value(0).toString());
+  qDebug()<<res;
+  return res;
 }
 
 auto SqlRelationalTableModel::ClearDb() -> void {
